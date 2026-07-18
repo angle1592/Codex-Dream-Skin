@@ -22,11 +22,11 @@ Open PowerShell in the repository's `windows` directory and run:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-skin.ps1
 ```
 
-The installer validates the official Codex Store package and Node.js, saves a recoverable appearance baseline, and initializes the local theme store. By default it also creates these shortcuts:
+The installer validates the official Codex Store package and Node.js, saves a recoverable appearance baseline, and initializes the local theme store. By default it creates one shortcut:
 
-- `Codex Dream Skin`: launch or reapply the skin.
-- `Codex Dream Skin - Tray`: open the system tray theme controls.
-- `Codex Dream Skin - Restore`: restore the stock appearance and close the saved CDP session.
+- `Codex 梦境皮肤`: launch or reapply the skin and ensure the tray theme manager is running.
+
+Theme switching, task-page strength, and **完全恢复 Codex** all live in the tray menu, so separate theme-manager and restore shortcuts are no longer needed. Updating removes only the legacy split shortcuts created by Dream Skin.
 
 `Bypass` in the install command applies only to that user-initiated installer process. The installer verifies the runtime copy with SHA-256, then clears download-zone markers only from managed PowerShell copies under `%LOCALAPPDATA%\CodexDreamSkin\engine`. Daily shortcuts use `RemoteSigned` and do not override system or enterprise Group Policy.
 
@@ -42,7 +42,7 @@ Exit the Dream Skin tray and close Codex, update the checkout (`git pull`, or do
 
 ## Launch and verify
 
-The `Codex Dream Skin` shortcut is the recommended launcher. It asks for confirmation before restarting an open Codex window.
+The single `Codex 梦境皮肤` shortcut is the recommended launcher. It asks for confirmation before restarting an open Codex window and ensures the tray manager is running after launch. The normal Codex shortcut still opens the stock appearance, but it does not establish Dream Skin's local CDP session.
 
 Command-line launch:
 
@@ -69,14 +69,19 @@ Next, use the generated screenshot to check horizontal overflow and text contras
 
 ## Change and save themes
 
-Open `Codex Dream Skin - Tray` to:
+Double-click `Codex 梦境皮肤`, then right-click its system-tray icon to:
 
 - Import a PNG, JPEG, or WebP background.
 - Save the active theme and switch through saved themes.
+- Adjust the current theme's Codex task/conversation background with `任务页背景强度…`.
 - Pause or resume the skin.
 - Reapply the theme or fully restore Codex.
 
 Import a UI-free wallpaper rather than a preview containing a window, sidebar, composer, text, or buttons. Images may be at most 16 MB, 16384 pixels on either side, and 50 million total pixels.
+
+Task background strength ranges from 0 through 100: `0` hides the task background, `55` preserves the default look, and `100` is clearest while retaining a minimal readability layer. Dragging previews after roughly 200 ms; **OK** saves to the current theme and **Cancel** restores the state from when the dialog opened. Every saved theme keeps its own value. This setting affects only Codex task/conversation routes, not the Codex or ChatGPT home route.
+
+`打开图片文件夹` opens the imported-image archive, not the saved-theme list. Use `保存当前主题` before a theme appears under `已保存主题`. The current version reuses identical image content by SHA-256, so reimporting or repeatedly switching a theme no longer creates new identical copies. Updating does not automatically delete files left by older versions.
 
 ## Restore and remove shortcuts
 
@@ -142,11 +147,15 @@ When `-Port` is omitted, the launcher searches for a free port beginning at `933
 
 ### Verification cannot find a CDP endpoint
 
-Launch Codex through the `Codex Dream Skin` shortcut, then run verification. A normal Codex launch does not open the debug session used by Dream Skin.
+Launch Codex through `Codex 梦境皮肤`, then run verification. A normal Codex launch does not open the debug session used by Dream Skin.
 
 ### The skin stops working after a Codex update
 
 Run the installer and launch shortcut again. The scripts rediscover the currently registered Store package instead of trusting an executable path from an older app version.
+
+### The image folder contains many duplicates
+
+Older versions archived a newly named image on every import or saved-theme switch even when the bytes were identical. The current version compares SHA-256 and archives identical content only once. Install and update intentionally leave existing copies untouched to avoid deleting user files.
 
 Open the repository's [new issue page](https://github.com/Fei-Away/Codex-Dream-Skin/issues/new/choose) and choose the bug form when reporting a problem. Include the Windows version, Codex source, reproduction steps, and relevant log lines. Remove secrets, `auth.json`, relay tokens, and private conversation content.
 

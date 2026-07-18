@@ -151,13 +151,20 @@ try {
     if ($Uninstall) {
       $desktop = [Environment]::GetFolderPath('Desktop')
       $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
-      @(
-        (Join-Path $desktop 'Codex Dream Skin.lnk'),
-        (Join-Path $desktop 'Codex Dream Skin - Restore.lnk'),
-        (Join-Path $desktop 'Codex Dream Skin - Tray.lnk'),
-        (Join-Path $startMenu 'Codex Dream Skin.lnk'),
-        (Join-Path $startMenu 'Codex Dream Skin - Tray.lnk')
-      ) | ForEach-Object { Remove-Item -LiteralPath $_ -Force -ErrorAction SilentlyContinue }
+      $managedShortcutNames = @(
+        'Codex 梦境皮肤.lnk',
+        'Codex 梦境皮肤 - 启动.lnk',
+        'Codex 梦境皮肤 - 主题管理.lnk',
+        'Codex 梦境皮肤 - 恢复官方外观.lnk',
+        'Codex Dream Skin.lnk',
+        'Codex Dream Skin - Tray.lnk',
+        'Codex Dream Skin - Restore.lnk'
+      )
+      foreach ($folder in @($desktop, $startMenu)) {
+        foreach ($managedShortcutName in $managedShortcutNames) {
+          Remove-Item -LiteralPath (Join-Path $folder $managedShortcutName) -Force -ErrorAction SilentlyContinue
+        }
+      }
     }
 
     if ($shouldCloseCodex -and -not $NoRelaunch) {

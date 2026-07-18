@@ -19,6 +19,12 @@
     "dream-task-banner",
     "dream-task-off",
   ];
+  const TASK_OVERLAY_PROPERTIES = [
+    "--dream-task-immersive-sidebar",
+    "--dream-task-immersive-edge",
+    "--dream-task-immersive-mid",
+    "--dream-task-immersive-far",
+  ];
   const ROOT_PROPERTIES = [
     "--dream-art",
     "--dream-art-position",
@@ -27,6 +33,7 @@
     "--dream-accent",
     "--dream-accent-ink",
     "--dream-image-luma",
+    ...TASK_OVERLAY_PROPERTIES,
   ];
   const HOME_UTILITY_CLASS = "dream-home-utility";
   const installToken = {};
@@ -74,17 +81,35 @@
       ? art.taskMode
       : "auto";
     const metadataRatio = Number(config?.artMetadata?.ratio);
+    const requestedTaskBackgroundStrength = art.taskBackgroundStrength;
+    const taskBackgroundStrength = typeof requestedTaskBackgroundStrength === "number" &&
+      Number.isFinite(requestedTaskBackgroundStrength) &&
+      Number.isInteger(requestedTaskBackgroundStrength) &&
+      requestedTaskBackgroundStrength >= 0 && requestedTaskBackgroundStrength <= 100
+      ? requestedTaskBackgroundStrength : 55;
     return {
       appearance,
       safeArea,
       taskMode,
       focusX: hasNumber(art.focusX) ? clamp(art.focusX) : null,
       focusY: hasNumber(art.focusY) ? clamp(art.focusY) : null,
+      taskBackgroundStrength,
       accent: safeAccent,
       initialAspect: Number.isFinite(metadataRatio) && metadataRatio > 0 ? metadataRatio : null,
     };
   };
 
+
+  const taskOverlayPercentages = (strength) => {
+    const anchors = strength <= 55
+      ? [[0, [100, 100, 100, 100]], [55, [56, 56, 44, 32]]]
+      : [[55, [56, 56, 44, 32]], [100, [25, 20, 10, 0]]];
+    const progress = (strength - anchors[0][0]) / (anchors[1][0] - anchors[0][0]);
+    return anchors[0][1].map((value, index) => {
+      const mixed = value + (anchors[1][1][index] - value) * progress;
+      return `${Number(mixed.toFixed(2))}%`;
+    });
+  };
   const previous = window[STATE_KEY];
   if (previous?.observer) previous.observer.disconnect();
   if (previous?.timer) clearInterval(previous.timer);
@@ -319,6 +344,10 @@
     root.style.setProperty("--dream-accent", accent);
     root.style.setProperty("--dream-accent-ink", accentInk);
     root.style.setProperty("--dream-image-luma", profile.luma.toFixed(3));
+    const taskOverlay = taskOverlayPercentages(config.taskBackgroundStrength);
+    for (const [index, property] of TASK_OVERLAY_PROPERTIES.entries()) {
+      root.style.setProperty(property, taskOverlay[index]);
+    }
   };
 
   const ensure = () => {

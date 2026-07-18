@@ -135,8 +135,11 @@ function Install-DreamSkinRuntimeEngine {
     'scripts\image-metadata.mjs',
     'scripts\injector.mjs',
     'scripts\install-dream-skin.ps1',
+    'scripts\launch-start-dream-skin.ps1',
+    'scripts\launch-start-hidden.vbs',
     'scripts\restore-dream-skin.ps1',
     'scripts\start-dream-skin.ps1',
+    'scripts\task-strength-dialog.ps1',
     'scripts\theme-windows.ps1',
     'scripts\tray-dream-skin.ps1',
     'scripts\verify-dream-skin.ps1'
@@ -757,7 +760,7 @@ function Stop-DreamSkinRecordedInjector {
   $identityMatches = [bool]($isNodeExecutable -and $nodeMatches -and $injectorMatches -and $startMatches)
 
   if (-not $identityMatches) {
-    throw "The recorded injector PID $processId is running, but its visible identity does not match the saved Dream Skin process. State was preserved."
+    return $false
   }
 
   Stop-Process -Id $processId -Force -ErrorAction Stop

@@ -144,21 +144,66 @@ try {
     throw 'Installer does not reject an active source-bound tray before replacing the runtime engine.'
   }
   foreach ($requiredShortcutBinding in @(
-    '$startScript = $engine.Start',
-    '$restoreScript = $engine.Restore',
+    "`$startLauncher = Join-Path `$engine.Scripts 'launch-start-hidden.vbs'",
+    '$shortcut.TargetPath = $wscript',
     '$trayScript = $engine.Tray',
     '$shortcut.WorkingDirectory = $engine.Root',
-    '$restore.WorkingDirectory = $engine.Root',
-    '$tray.WorkingDirectory = $engine.Root'
+    "'Codex 梦境皮肤.lnk'",
+    '$legacyShortcutNames'
   )) {
     if (-not $installSource.Contains($requiredShortcutBinding)) {
       throw "Installer shortcut still depends on its source checkout: $requiredShortcutBinding"
     }
   }
-  if ([regex]::Matches($installSource, '-ExecutionPolicy RemoteSigned').Count -ne 4 -or
-    $installSource.Contains('-ExecutionPolicy Bypass')) {
-    throw 'Installer shortcuts or tray launch still bypass the PowerShell execution policy.'
+  if ([regex]::Matches($installSource, '\$shell\.CreateShortcut').Count -ne 1 -or
+    $installSource.Contains('$restore = $shell.CreateShortcut') -or
+    $installSource.Contains('$tray = $shell.CreateShortcut')) {
+    throw 'Installer still creates separate launch, tray, or restore shortcuts.'
   }
+  if ([regex]::Matches($installSource, '-ExecutionPolicy RemoteSigned').Count -ne 1 -or
+    $installSource.Contains('-ExecutionPolicy Bypass')) {
+    throw 'Installer tray launch still bypasses the PowerShell execution policy.'
+  }
+  $startLauncherSource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\launch-start-dream-skin.ps1')
+  $startVbsSource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\launch-start-hidden.vbs')
+  foreach ($requiredLauncherText in @(
+    '-PromptRestart',
+    'start-launch-error.log',
+    'Write-DreamSkinUtf8FileAtomically',
+    'WScript.Shell',
+    'Test-DreamSkinTrayActive',
+    'tray-dream-skin.ps1',
+    '-STA',
+    '-ExecutionPolicy RemoteSigned'
+  )) {
+    if (-not $startLauncherSource.Contains($requiredLauncherText)) {
+      throw "GUI start launcher is missing required behavior: $requiredLauncherText"
+    }
+  }
+  $skinLaunchIndex = $startLauncherSource.IndexOf('& $startScript', [System.StringComparison]::Ordinal)
+  $trayLaunchIndex = $startLauncherSource.IndexOf('Start-Process -FilePath $powershell', [System.StringComparison]::Ordinal)
+  if ($skinLaunchIndex -lt 0 -or $trayLaunchIndex -le $skinLaunchIndex) {
+    throw 'The consolidated launcher does not start the tray after the skin launch completes.'
+  }
+  if (-not $startVbsSource.Contains('shell.Run command, 0, False') -or
+    -not $startVbsSource.Contains('-ExecutionPolicy RemoteSigned') -or
+    -not $startVbsSource.Contains('launch-start-dream-skin.ps1')) {
+    throw 'Hidden start launcher does not run the managed GUI entry point safely.'
+  }
+  $skinCssSource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'assets\dream-skin.css')
+  foreach ($taskVisibilityRule in @(
+    '--dream-task-immersive-sidebar:[^;]+ 56%, transparent',
+    '--dream-task-immersive-edge:[^;]+ 56%, transparent',
+    '--dream-task-immersive-mid:[^;]+ 44%, transparent',
+    '--dream-task-immersive-far:[^;]+ 32%, transparent'
+  )) {
+    if ([regex]::Matches($skinCssSource, $taskVisibilityRule).Count -ne 2) {
+      throw "Task-route artwork is hidden by an overly opaque surface: $taskVisibilityRule"
+    }
+  }
+
+
+
 
   Remove-Item -LiteralPath $runtimeSourceRoot -Recurse -Force
   foreach ($installedScript in Get-ChildItem -LiteralPath $engine.Scripts -Filter '*.ps1' -File) {
@@ -650,8 +695,26 @@ try {
     $initialTheme.Theme.appearance -cne 'auto' -or
     $initialTheme.Theme.art.safeArea -cne 'left' -or
     $initialTheme.Theme.art.taskMode -cne 'ambient' -or
+    $initialTheme.Theme.art.taskBackgroundStrength -ne 55 -or
     [System.IO.Path]::GetExtension($initialTheme.ImagePath) -cne '.jpg') {
     throw 'Default Windows theme did not seed the Arina Hashimoto wallpaper contract.'
+  }
+  $strengthCases = @(
+    [pscustomobject]@{ Theme = [pscustomobject]@{}; Expected = 55 },
+    [pscustomobject]@{ Theme = [pscustomobject]@{ art = [pscustomobject]@{} }; Expected = 55 },
+    [pscustomobject]@{ Theme = [pscustomobject]@{ art = [pscustomobject]@{ taskBackgroundStrength = '100' } }; Expected = 55 },
+    [pscustomobject]@{ Theme = [pscustomobject]@{ art = [pscustomobject]@{ taskBackgroundStrength = 54.5 } }; Expected = 55 },
+    [pscustomobject]@{ Theme = [pscustomobject]@{ art = [pscustomobject]@{ taskBackgroundStrength = [double]::NaN } }; Expected = 55 },
+    [pscustomobject]@{ Theme = [pscustomobject]@{ art = [pscustomobject]@{ taskBackgroundStrength = -1 } }; Expected = 55 },
+    [pscustomobject]@{ Theme = [pscustomobject]@{ art = [pscustomobject]@{ taskBackgroundStrength = 101 } }; Expected = 55 },
+    [pscustomobject]@{ Theme = [pscustomobject]@{ art = [pscustomobject]@{ taskBackgroundStrength = 0 } }; Expected = 0 },
+    [pscustomobject]@{ Theme = [pscustomobject]@{ art = [pscustomobject]@{ taskBackgroundStrength = 100 } }; Expected = 100 }
+  )
+  foreach ($strengthCase in $strengthCases) {
+    $actualStrength = Get-DreamSkinTaskBackgroundStrength -Theme $strengthCase.Theme
+    if ($actualStrength -ne $strengthCase.Expected) {
+      throw "Task background strength normalization returned $actualStrength instead of $($strengthCase.Expected)."
+    }
   }
   $preseededThemes = @(Get-DreamSkinSavedThemes -StateRoot $themeStateRoot)
   if ($preseededThemes.Count -ne 1 -or
@@ -679,6 +742,75 @@ try {
     throw 'Saved theme creation or discovery failed.'
   }
   $null = Use-DreamSkinSavedTheme -ThemeDirectory $savedTheme.Directory -StateRoot $themeStateRoot
+  $duplicateArchiveGroup = @(Get-ChildItem -LiteralPath $themePaths.Images -File | ForEach-Object {
+      [pscustomobject]@{
+        Path = $_.FullName
+        Hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+      }
+    } | Group-Object Hash | Where-Object { $_.Count -gt 1 })
+  if ($duplicateArchiveGroup.Count -ne 0) {
+    throw 'Switching or reimporting a theme created duplicate image content in the archive.'
+  }
+
+  $originalStrengthState = Get-DreamSkinTaskBackgroundStrengthState -StateRoot $themeStateRoot
+  if ($originalStrengthState.Strength -ne 55 -or $originalStrengthState.FieldExists -or
+    $originalStrengthState.ThemeName -cne '已保存主题') {
+    throw 'A legacy theme did not expose a reversible default task background strength state.'
+  }
+  $previewStrengthState = Set-DreamSkinTaskBackgroundStrength -Strength 72 -StateRoot $themeStateRoot `
+    -ExpectedThemeId $originalStrengthState.ThemeId -ExpectedThemeHash $originalStrengthState.ContentHash
+  if ($previewStrengthState.Strength -ne 72) { throw 'Task background strength preview was not written.' }
+  $savedAfterPreview = Read-DreamSkinTheme -ThemeDirectory $savedTheme.Directory
+  if ((Get-DreamSkinTaskBackgroundStrength -Theme $savedAfterPreview.Theme) -ne 55 -or
+    $savedAfterPreview.Theme.art.PSObject.Properties['taskBackgroundStrength']) {
+    throw 'Preview unexpectedly modified the saved theme.'
+  }
+  $restoredStrengthState = Restore-DreamSkinTaskBackgroundStrength -OriginalState $originalStrengthState `
+    -ExpectedThemeHash $previewStrengthState.ContentHash -StateRoot $themeStateRoot
+  $themeAfterRestore = Read-DreamSkinTheme -ThemeDirectory $themePaths.Active
+  if ($restoredStrengthState.Strength -ne 55 -or
+    $themeAfterRestore.Theme.art.PSObject.Properties['taskBackgroundStrength']) {
+    throw 'Cancelling strength preview did not restore the missing legacy field.'
+  }
+  $previewStrengthState = Set-DreamSkinTaskBackgroundStrength -Strength 72 -StateRoot $themeStateRoot `
+    -ExpectedThemeId $restoredStrengthState.ThemeId -ExpectedThemeHash $restoredStrengthState.ContentHash
+  $confirmedStrengthState = Set-DreamSkinTaskBackgroundStrength -Strength 72 -StateRoot $themeStateRoot `
+    -ExpectedThemeId $previewStrengthState.ThemeId -ExpectedThemeHash $previewStrengthState.ContentHash -SyncSavedTheme
+  $savedAfterConfirm = Read-DreamSkinTheme -ThemeDirectory $savedTheme.Directory
+  if ($confirmedStrengthState.Strength -ne 72 -or
+    (Get-DreamSkinTaskBackgroundStrength -Theme $savedAfterConfirm.Theme) -ne 72) {
+    throw 'Confirming strength did not synchronize the matching saved theme ID.'
+  }
+
+  $presetThemeDirectory = Join-Path $themePaths.Saved 'preset-arina-hashimoto'
+  $null = Use-DreamSkinSavedTheme -ThemeDirectory $presetThemeDirectory -StateRoot $themeStateRoot
+  $presetStrengthState = Get-DreamSkinTaskBackgroundStrengthState -StateRoot $themeStateRoot
+  $presetPreviewState = Set-DreamSkinTaskBackgroundStrength -Strength 20 -StateRoot $themeStateRoot `
+    -ExpectedThemeId $presetStrengthState.ThemeId -ExpectedThemeHash $presetStrengthState.ContentHash
+  $null = Set-DreamSkinTaskBackgroundStrength -Strength 20 -StateRoot $themeStateRoot `
+    -ExpectedThemeId $presetPreviewState.ThemeId -ExpectedThemeHash $presetPreviewState.ContentHash -SyncSavedTheme
+  $null = Use-DreamSkinSavedTheme -ThemeDirectory $savedTheme.Directory -StateRoot $themeStateRoot
+  if ((Get-DreamSkinTaskBackgroundStrengthState -StateRoot $themeStateRoot).Strength -ne 72 -or
+    (Get-DreamSkinTaskBackgroundStrength -Theme (Read-DreamSkinTheme -ThemeDirectory $presetThemeDirectory).Theme) -ne 20) {
+    throw 'Saved themes did not retain independent task background strengths.'
+  }
+
+  $guardOriginalState = Get-DreamSkinTaskBackgroundStrengthState -StateRoot $themeStateRoot
+  $guardPreviewState = Set-DreamSkinTaskBackgroundStrength -Strength 80 -StateRoot $themeStateRoot `
+    -ExpectedThemeId $guardOriginalState.ThemeId -ExpectedThemeHash $guardOriginalState.ContentHash
+  $externallyChangedTheme = (Read-DreamSkinTheme -ThemeDirectory $themePaths.Active).Theme
+  $externallyChangedTheme.name = '外部修改'
+  Write-DreamSkinTheme -ThemeDirectory $themePaths.Active -Theme $externallyChangedTheme
+  $guardRejected = $false
+  try {
+    $null = Restore-DreamSkinTaskBackgroundStrength -OriginalState $guardOriginalState `
+      -ExpectedThemeHash $guardPreviewState.ContentHash -StateRoot $themeStateRoot
+  } catch { $guardRejected = $true }
+  $themeAfterGuard = Read-DreamSkinTheme -ThemeDirectory $themePaths.Active
+  if (-not $guardRejected -or $themeAfterGuard.Theme.name -cne '外部修改' -or
+    (Get-DreamSkinTaskBackgroundStrength -Theme $themeAfterGuard.Theme) -ne 80) {
+    throw 'Concurrent theme changes were overwritten by strength preview rollback.'
+  }
 
   $outsideTheme = Join-Path $temporaryRoot 'outside-theme'
   New-Item -ItemType Directory -Path $outsideTheme | Out-Null
@@ -756,9 +888,51 @@ try {
     if (-not $css.Contains($requiredCss)) { throw "Windows immersive CSS is missing: $requiredCss" }
   }
   $traySource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\tray-dream-skin.ps1')
-  foreach ($requiredTrayAction in @('System.Windows.Forms.NotifyIcon', '暂停皮肤', '更换背景图', '已保存主题', '完全恢复 Codex')) {
+  $strengthDialogPath = Join-Path $Root 'scripts\task-strength-dialog.ps1'
+  if (-not (Test-Path -LiteralPath $strengthDialogPath -PathType Leaf)) {
+    throw 'Task background strength dialog script is missing.'
+  }
+  $strengthDialogSource = Read-DreamSkinUtf8File -Path $strengthDialogPath
+  foreach ($requiredDialogBehavior in @(
+    'System.Windows.Forms.TrackBar', 'Interval = 200', 'Get-DreamSkinTaskBackgroundStrengthState',
+    'Set-DreamSkinTaskBackgroundStrength', 'Restore-DreamSkinTaskBackgroundStrength', '-SyncSavedTheme',
+    'FormClosing', '实时预览不可用'
+  )) {
+    if (-not $strengthDialogSource.Contains($requiredDialogBehavior)) {
+      throw "Task background strength dialog behavior is missing: $requiredDialogBehavior"
+    }
+  }
+  foreach ($requiredRuntimeEntry in @(
+    'scripts\launch-start-dream-skin.ps1',
+    'scripts\launch-start-hidden.vbs',
+    'scripts\task-strength-dialog.ps1'
+  )) {
+    if (-not $commonSource.Contains($requiredRuntimeEntry)) {
+      throw "The managed runtime manifest does not require: $requiredRuntimeEntry"
+    }
+  }
+
+  foreach ($requiredTrayAction in @('System.Windows.Forms.NotifyIcon', '暂停皮肤', '更换背景图', '任务页背景强度…', 'task-strength-dialog.ps1', '已保存主题', '完全恢复 Codex')) {
     if (-not $traySource.Contains($requiredTrayAction)) { throw "Tray action is missing: $requiredTrayAction" }
   }
+  if (-not $traySource.Contains(
+    '[Parameter(Mandatory = $true)][AllowEmptyCollection()][System.Windows.Forms.ToolStripItemCollection]$Items'
+  )) {
+    throw 'Tray menu does not accept its initially empty item collection.'
+  }
+  if (-not $traySource.Contains('$stateIsRunning') -or
+    -not $traySource.Contains('Get-DreamSkinVerifiedCdpIdentity') -or
+    -not $traySource.Contains('请点击“应用或重新应用”') -or
+    -not $traySource.Contains('请点击“保存当前主题”')) {
+    throw 'Tray menu still reports stale state as running or claims an inactive theme is already applied.'
+  }
+  if (-not [regex]::IsMatch(
+      $traySource,
+      '(?s)\$strengthRunning = \$stateIsRunning.*?\$strengthAction = \{.*?\}\s*\.GetNewClosure\(\).*?-Action \$strengthAction'
+    )) {
+    throw 'Task background strength action does not preserve the verified running state in its closure.'
+  }
+
   if (-not $traySource.Contains('$nextPaused') -or -not $traySource.Contains('[System.Windows.Forms.Application]::Exit()')) {
     throw 'Tray pause/restore closures do not terminate cleanly.'
   }
@@ -773,6 +947,15 @@ try {
   $restoreSource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\restore-dream-skin.ps1')
   if (-not $restoreSource.Contains('Stop-DreamSkinTrayProcess')) {
     throw 'Complete restore does not stop a separately launched tray process.'
+  }
+  foreach ($managedShortcutName in @(
+    'Codex 梦境皮肤.lnk', 'Codex 梦境皮肤 - 启动.lnk', 'Codex 梦境皮肤 - 主题管理.lnk',
+    'Codex 梦境皮肤 - 恢复官方外观.lnk', 'Codex Dream Skin.lnk',
+    'Codex Dream Skin - Tray.lnk', 'Codex Dream Skin - Restore.lnk'
+  )) {
+    if (-not $restoreSource.Contains($managedShortcutName)) {
+      throw "Restore uninstall misses: $managedShortcutName"
+    }
   }
   if ($restoreSource.Contains('Start-Process -FilePath $relaunchCodex.Executable') -or
     -not $restoreSource.Contains('Start-DreamSkinCodex -Codex $relaunchCodex')) {
@@ -829,8 +1012,9 @@ try {
     }
   }
   $commonSource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\common-windows.ps1')
-  if (-not $commonSource.Contains('State was preserved.')) {
-    throw 'Mismatched live injector identity does not fail closed with preserved state.'
+  if (-not $commonSource.Contains('if (-not $identityMatches)') -or
+    -not $commonSource.Contains('return $false')) {
+    throw 'A safely inspected stale injector identity cannot reach the archival recovery branch.'
   }
 
   $node = Get-DreamSkinNodeRuntime

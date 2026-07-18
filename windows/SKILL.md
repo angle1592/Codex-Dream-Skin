@@ -9,8 +9,8 @@ Apply a reversible renderer skin through Chromium DevTools Protocol while launch
 
 ## Workflow
 
-1. Install Node.js 22 or newer, close Codex, then run `scripts/install-dream-skin.ps1` once. The installer preserves the user's native appearance settings, seeds the Arina Hashimoto theme, copies the runtime to `%LOCALAPPDATA%\CodexDreamSkin\engine`, and creates launch/restore/tray shortcuts that do not depend on the source checkout.
-2. Use the `Codex Dream Skin` shortcut, or run `%LOCALAPPDATA%\CodexDreamSkin\engine\scripts\start-dream-skin.ps1`. The shortcut asks before restarting an already-open Codex app; CLI callers must explicitly add `-RestartExisting`.
+1. Install Node.js 22 or newer, close Codex, then run `scripts/install-dream-skin.ps1` once. The installer preserves the user's native appearance settings, seeds the Arina Hashimoto theme, copies the runtime to `%LOCALAPPDATA%\CodexDreamSkin\engine`, and creates one source-independent `Codex 梦境皮肤` shortcut.
+2. Use the `Codex 梦境皮肤` shortcut. It starts or reapplies the skin and then ensures the tray theme manager is running. Direct CLI callers may run `%LOCALAPPDATA%\CodexDreamSkin\engine\scripts\start-dream-skin.ps1` and must explicitly add `-RestartExisting`.
 3. Run `scripts/verify-dream-skin.ps1 -ScreenshotPath <absolute-path>` after launch. Treat a missing continuous wallpaper, home shell, native composer, sidebar layer, or injection marker as failure. The native suggestion count is responsive and may be two to four.
 4. Inspect the screenshot against `references/qa-inventory.md`. Verify both the home screen and a normal task before signing off.
 5. Run `scripts/restore-dream-skin.ps1` to remove the live skin, close the saved CDP session, and reopen Codex normally. Add `-RestoreBaseTheme` to restore only saved appearance keys, `-RecoverConfigBackup` for explicit byte-for-byte recovery of a damaged config, or `-Uninstall` to delete shortcuts. A completed config restore archives that install's backup so a later install captures a fresh baseline.
@@ -28,13 +28,15 @@ Apply a reversible renderer skin through Chromium DevTools Protocol while launch
 - Keep the injection daemon running for navigation/reload resilience. Its state and logs live under `%LOCALAPPDATA%\CodexDreamSkin`.
 - The watcher registers a generation-checked early payload for connected renderers so reload/navigation can paint the skin before the normal load-event fallback; unsupported CDP targets fall back safely.
 - The active theme, saved themes, imported images, pause marker, and tray controls live under `%LOCALAPPDATA%\CodexDreamSkin`. Reject empty or over-16 MB images before copying or encoding them.
+- Store `art.taskBackgroundStrength` as a per-theme integer from 0 through 100. Missing or invalid legacy values render as 55. Preview writes only the active theme; confirmation synchronizes the saved theme with the same ID; cancellation must use the theme ID and content hash so it never overwrites a concurrent change.
+- Archive imported images by content identity. Reimporting or switching to identical bytes must reuse an existing SHA-256 match rather than create another archive copy. Never delete older archive files automatically.
 - Every managed-store write rejects junctions and other reparse points in every existing path component. Imports also use the bundled Node metadata parser before copying to reject dimensions above 16384px or 50MP.
 - CDP targets must use a same-port loopback WebSocket, belong to the current Store package, retain the launch-time Browser ID, and expose expected Codex renderer markers.
 - Loopback prevents LAN exposure, but Chromium CDP has no same-user authentication. Run only trusted local software while the skin is active, and use restore to close the debug session when it is no longer needed.
 - Preserve `config.toml` as strict UTF-8. Never use encoding-dependent whole-file PowerShell reads/writes, silently transcode UTF-16, or overwrite a file that changed after it was read. Ambiguous TOML shapes must fail before writing rather than receive a best-effort rewrite.
 - Keep install/start/restore/verify serialized with the per-user operation lock in `common-windows.ps1`.
-- Treat `%LOCALAPPDATA%\CodexDreamSkin\engine` as an installer-managed runtime. Exit the Dream Skin tray before reinstalling so the installer can replace that runtime atomically and update every shortcut to the same copy.
-- Keep installed shortcuts and tray child processes on `RemoteSigned`, never `Bypass`. Clear Internet-zone markers only from staged managed `.ps1` copies after their byte-content hashes match the selected source; never change the user's persistent execution policy or override Group Policy.
+- Treat `%LOCALAPPDATA%\CodexDreamSkin\engine` as an installer-managed runtime. Exit the Dream Skin tray before reinstalling so the installer can replace that runtime atomically and update the shortcut to the same copy.
+- Keep the installed shortcut and tray child processes on `RemoteSigned`, never `Bypass`. Clear Internet-zone markers only from staged managed `.ps1` copies after their byte-content hashes match the selected source; never change the user's persistent execution policy or override Group Policy.
 
 ## Checks
 
@@ -54,7 +56,8 @@ node --check assets\renderer-inject.js
 - `assets/dream-reference.jpg`: pure 2560 × 1440 Arina Hashimoto wallpaper seeded as the default and as a saved theme; it contains no Codex UI.
 - `assets/theme.json`: shared adaptive theme contract for the seeded preset.
 - `scripts/theme-windows.ps1`: persistent active/saved theme store, safe image import, pause state, and preset seeding.
-- `scripts/tray-dream-skin.ps1`: Windows Forms tray for apply, pause, import, save, switch, and complete restore.
+- `scripts/task-strength-dialog.ps1`: debounced Windows Forms control for per-theme Codex task-page background strength.
+- `scripts/tray-dream-skin.ps1`: Windows Forms tray for apply, pause, import, per-theme strength, save, switch, and complete restore.
 - `references/qa-inventory.md`: required functional and visual signoff coverage.
 - `references/runtime-notes.md`: troubleshooting and update behavior.
 - `tests/run-tests.ps1`: managed runtime, configuration, state, recovery, payload, and CDP validation regression checks. Use `-EngineOnly` for the source-independence contract.

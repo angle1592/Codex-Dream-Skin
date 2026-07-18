@@ -229,6 +229,18 @@ function createFixture({
   };
 }
 
+const taskOverlayProperties = [
+  "--dream-task-immersive-sidebar",
+  "--dream-task-immersive-edge",
+  "--dream-task-immersive-mid",
+  "--dream-task-immersive-far",
+];
+const assertTaskOverlay = (fixture, expected) => {
+  assert.deepEqual(
+    taskOverlayProperties.map((property) => fixture.rootStyles.get(property)),
+    expected,
+  );
+};
 const main = createFixture({ shellPresent: true });
 const mainResult = vm.runInNewContext(payload, main.context);
 assert.equal(mainResult.installed, true);
@@ -240,12 +252,28 @@ assert.equal(main.rootClasses.has("dream-theme-dark"), true);
 assert.equal(main.rootClasses.has("dream-art-standard"), true);
 assert.equal(main.rootClasses.has("dream-task-ambient"), true);
 assert.equal(main.routeClasses.has("dream-task"), true);
+assertTaskOverlay(main, ["56%", "56%", "44%", "32%"]);
 assert.equal(main.context.window.__CODEX_DREAM_SKIN_STATE__.cleanup(), true);
 assert.equal(main.rootClasses.has("codex-dream-skin"), false);
 assert.equal(main.rootClasses.has("dream-theme-dark"), false);
 assert.equal(main.nodes.has("codex-dream-skin-style"), false);
 assert.equal(main.nodes.has("codex-dream-skin-chrome"), false);
 assert.deepEqual(main.revokedUrls, ["blob:fixture-1"]);
+for (const property of taskOverlayProperties) {
+  assert.equal(main.rootStyles.has(property), false);
+}
+
+const hiddenTaskBackground = createFixture({ shellPresent: true });
+vm.runInNewContext(buildPayload({ art: { taskBackgroundStrength: 0 } }), hiddenTaskBackground.context);
+assertTaskOverlay(hiddenTaskBackground, ["100%", "100%", "100%", "100%"]);
+
+const strongestTaskBackground = createFixture({ shellPresent: true });
+vm.runInNewContext(buildPayload({ art: { taskBackgroundStrength: 100 } }), strongestTaskBackground.context);
+assertTaskOverlay(strongestTaskBackground, ["25%", "20%", "10%", "0%"]);
+
+const invalidTaskBackground = createFixture({ shellPresent: true });
+vm.runInNewContext(buildPayload({ art: { taskBackgroundStrength: "100" } }), invalidTaskBackground.context);
+assertTaskOverlay(invalidTaskBackground, ["56%", "56%", "44%", "32%"]);
 
 const reinjected = createFixture({ shellPresent: true });
 vm.runInNewContext(payload, reinjected.context);

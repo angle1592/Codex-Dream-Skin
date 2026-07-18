@@ -156,6 +156,7 @@ for the eight individual styles.
 - **Continuous wallpaper** — One 16:9 image spans the full window; adaptive focus, safe-area, and route treatment keep native content readable.
 - **Swappable art** — Drop in a UI-free image you like and it becomes your theme.
 - **Saved themes** — Switch local themes from the macOS menu bar or Windows system tray.
+- **Per-theme task strength** — On Windows, preview and save a separate Codex task/conversation background strength for each theme.
 - **Restorable** — One-click restore to the stock look.
 - **Safer path** — Local-loopback CDP inject only. No official binary or signature changes.
 
