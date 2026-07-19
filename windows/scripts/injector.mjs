@@ -348,6 +348,9 @@ async function loadTheme(themeDir) {
       focusY: normalizedUnit(art.focusY, "art.focusY"),
       safeArea: normalizedChoice(art.safeArea, "art.safeArea", THEME_CHOICES.safeArea, "auto"),
       taskMode: normalizedChoice(art.taskMode, "art.taskMode", THEME_CHOICES.taskMode, "auto"),
+      taskBackgroundStrength: Number.isInteger(art.taskBackgroundStrength) &&
+        art.taskBackgroundStrength >= 0 && art.taskBackgroundStrength <= 100
+        ? art.taskBackgroundStrength : 55,
     },
     palette: {},
   };

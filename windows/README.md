@@ -157,7 +157,7 @@ Get-AppxPackage -Name OpenAI.Codex
 
 旧版在每次切换或重新导入主题时都会用新文件名归档一次图片，即使内容完全相同，因此可能出现多组重复文件。新版会比较 SHA-256，相同内容只归档一次。为避免误删用户文件，安装和升级不会自动清理旧副本。
 
-提交问题时请从仓库的 [Issue 提交页](https://github.com/Fei-Away/Codex-Dream-Skin/issues/new/choose) 选择 Bug 模板，附上系统版本、Codex 来源、复现步骤和相关日志片段。请删除密钥、`auth.json`、中转 token 和私人对话内容。
+提交问题时请从本定制仓库的 [Issue 提交页](https://github.com/angle1592/Codex-Dream-Skin/issues/new/choose) 选择 Bug 模板，附上系统版本、Codex 来源、复现步骤和相关日志片段。请删除密钥、`auth.json`、中转 token 和私人对话内容。
 
 ## 安全边界
 

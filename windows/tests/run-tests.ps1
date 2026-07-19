@@ -1035,9 +1035,20 @@ try {
   $payloadTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
     (Join-Path $Root 'scripts\injector.mjs'), '--check-payload')
   if ($payloadTest.ExitCode -ne 0) { throw 'Injector self-test failed.' }
+  $payloadSummary = ($payloadTest.Output -join "`n") | ConvertFrom-Json -ErrorAction Stop
+  if ($payloadSummary.art.taskBackgroundStrength -ne 55) {
+    throw 'Injector payload normalization dropped the task background strength.'
+  }
+  $managedPayloadTheme = Read-DreamSkinTheme -ThemeDirectory $themePaths.Active -SkipImageMetadata
+  $managedPayloadTheme.Theme = Set-DreamSkinTaskBackgroundStrengthValue -Theme $managedPayloadTheme.Theme -Strength 7
+  Write-DreamSkinTheme -ThemeDirectory $themePaths.Active -Theme $managedPayloadTheme.Theme
   $managedPayloadTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
     (Join-Path $Root 'scripts\injector.mjs'), '--check-payload', '--theme-dir', $themePaths.Active)
   if ($managedPayloadTest.ExitCode -ne 0) { throw 'Managed theme payload validation failed.' }
+  $managedPayloadSummary = ($managedPayloadTest.Output -join "`n") | ConvertFrom-Json -ErrorAction Stop
+  if ($managedPayloadSummary.art.taskBackgroundStrength -ne 7) {
+    throw 'Injector payload normalization replaced a non-default task background strength.'
+  }
   $oversizedPayloadTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
     (Join-Path $Root 'scripts\injector.mjs'), '--check-payload', '--theme-dir', $oversizedTheme)
   if ($oversizedPayloadTest.ExitCode -eq 0) { throw 'Node injector accepted an image over the 16 MB limit.' }

@@ -241,6 +241,12 @@ const assertTaskOverlay = (fixture, expected) => {
     expected,
   );
 };
+const taskOverlayColors = ([sidebar, edge, mid, far]) => [
+  `color-mix(in oklab, var(--dream-sidebar) ${sidebar}%, transparent)`,
+  `color-mix(in oklab, var(--dream-surface) ${edge}%, transparent)`,
+  `color-mix(in oklab, var(--dream-surface) ${mid}%, transparent)`,
+  `color-mix(in oklab, var(--dream-surface) ${far}%, transparent)`,
+];
 const main = createFixture({ shellPresent: true });
 const mainResult = vm.runInNewContext(payload, main.context);
 assert.equal(mainResult.installed, true);
@@ -252,7 +258,7 @@ assert.equal(main.rootClasses.has("dream-theme-dark"), true);
 assert.equal(main.rootClasses.has("dream-art-standard"), true);
 assert.equal(main.rootClasses.has("dream-task-ambient"), true);
 assert.equal(main.routeClasses.has("dream-task"), true);
-assertTaskOverlay(main, ["56%", "56%", "44%", "32%"]);
+assertTaskOverlay(main, taskOverlayColors([56, 56, 44, 32]));
 assert.equal(main.context.window.__CODEX_DREAM_SKIN_STATE__.cleanup(), true);
 assert.equal(main.rootClasses.has("codex-dream-skin"), false);
 assert.equal(main.rootClasses.has("dream-theme-dark"), false);
@@ -265,15 +271,15 @@ for (const property of taskOverlayProperties) {
 
 const hiddenTaskBackground = createFixture({ shellPresent: true });
 vm.runInNewContext(buildPayload({ art: { taskBackgroundStrength: 0 } }), hiddenTaskBackground.context);
-assertTaskOverlay(hiddenTaskBackground, ["100%", "100%", "100%", "100%"]);
+assertTaskOverlay(hiddenTaskBackground, taskOverlayColors([100, 100, 100, 100]));
 
 const strongestTaskBackground = createFixture({ shellPresent: true });
 vm.runInNewContext(buildPayload({ art: { taskBackgroundStrength: 100 } }), strongestTaskBackground.context);
-assertTaskOverlay(strongestTaskBackground, ["25%", "20%", "10%", "0%"]);
+assertTaskOverlay(strongestTaskBackground, taskOverlayColors([25, 20, 10, 0]));
 
 const invalidTaskBackground = createFixture({ shellPresent: true });
 vm.runInNewContext(buildPayload({ art: { taskBackgroundStrength: "100" } }), invalidTaskBackground.context);
-assertTaskOverlay(invalidTaskBackground, ["56%", "56%", "44%", "32%"]);
+assertTaskOverlay(invalidTaskBackground, taskOverlayColors([56, 56, 44, 32]));
 
 const reinjected = createFixture({ shellPresent: true });
 vm.runInNewContext(payload, reinjected.context);

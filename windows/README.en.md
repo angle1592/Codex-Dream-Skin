@@ -157,7 +157,7 @@ Run the installer and launch shortcut again. The scripts rediscover the currentl
 
 Older versions archived a newly named image on every import or saved-theme switch even when the bytes were identical. The current version compares SHA-256 and archives identical content only once. Install and update intentionally leave existing copies untouched to avoid deleting user files.
 
-Open the repository's [new issue page](https://github.com/Fei-Away/Codex-Dream-Skin/issues/new/choose) and choose the bug form when reporting a problem. Include the Windows version, Codex source, reproduction steps, and relevant log lines. Remove secrets, `auth.json`, relay tokens, and private conversation content.
+Open this custom repository's [new issue page](https://github.com/angle1592/Codex-Dream-Skin/issues/new/choose) and choose the bug form when reporting a problem. Include the Windows version, Codex source, reproduction steps, and relevant log lines. Remove secrets, `auth.json`, relay tokens, and private conversation content.
 
 ## Security boundaries
 

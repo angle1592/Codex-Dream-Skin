@@ -25,6 +25,12 @@
     "--dream-task-immersive-mid",
     "--dream-task-immersive-far",
   ];
+  const TASK_OVERLAY_BASES = [
+    "--dream-sidebar",
+    "--dream-surface",
+    "--dream-surface",
+    "--dream-surface",
+  ];
   const ROOT_PROPERTIES = [
     "--dream-art",
     "--dream-art-position",
@@ -346,7 +352,10 @@
     root.style.setProperty("--dream-image-luma", profile.luma.toFixed(3));
     const taskOverlay = taskOverlayPercentages(config.taskBackgroundStrength);
     for (const [index, property] of TASK_OVERLAY_PROPERTIES.entries()) {
-      root.style.setProperty(property, taskOverlay[index]);
+      root.style.setProperty(
+        property,
+        `color-mix(in oklab, var(${TASK_OVERLAY_BASES[index]}) ${taskOverlay[index]}, transparent)`,
+      );
     }
   };
 

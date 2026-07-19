@@ -1,200 +1,180 @@
-# Codex Dream Skin
+# Codex Dream Skin — Windows Custom Edition
 
 <p align="center">
   <a href="./README.md">中文</a> · <strong>English</strong>
 </p>
 
-<p align="center">
-  <strong>Give Codex a face that breathes.</strong><br>
-  External themes for the Codex desktop app · Local CDP inject · No official package mutation
-</p>
+> This is a personal downstream customization of [Fei-Away/Codex-Dream-Skin](https://github.com/Fei-Away/Codex-Dream-Skin), focused on the Windows Codex desktop app.<br>
+> These custom features are maintained independently and are not intended to be proposed back to the upstream repository. Use upstream directly when you want the original edition.
 
-<p align="center">
-  One image, one mood · Code with atmosphere
-</p>
+Codex Dream Skin injects a custom background and transparent surfaces into the official Codex Windows app through a loopback-only CDP session. The sidebar, task content, project picker, and composer remain native and interactive. It does not modify WindowsApps, <code>app.asar</code>, official binaries, or the app signature.
 
-<p align="center">
-  Unofficial. Does not modify <code>.app</code> / <code>app.asar</code> / WindowsApps.
-</p>
+This is neither an official OpenAI product nor an official upstream release.
 
-## Sponsors
+## Repository position
 
-<p align="center">
-  <a href="https://passion8.cc/register?aff=TuPe">
-    <img src="docs/images/sponsor-passion8.png" alt="Passion8" height="72">
-  </a>
-</p>
+| Item | Policy |
+|------|--------|
+| Upstream | [Fei-Away/Codex-Dream-Skin](https://github.com/Fei-Away/Codex-Dream-Skin) |
+| This repository | A personal Windows-first custom edition |
+| Default branch | <code>main</code>, kept directly installable |
+| Merge policy | No upstream PRs; upstream fixes may be synchronized selectively |
+| Bug reports | Report custom-edition issues in [this repository](https://github.com/angle1592/Codex-Dream-Skin/issues) |
 
-<p align="center">
-  <strong>Smarter Connections · Passionate Creation</strong><br>
-  <sub>Connect AI · Power Creation</sub>
-</p>
+The inherited <code>macos/</code> implementation remains in the tree, but this edition's added features and live verification are Windows-first. macOS users should prefer the upstream documentation.
 
-<p align="center">
-  Thanks to <a href="https://passion8.cc/register?aff=TuPe"><strong>passion8.cc</strong></a> for sponsoring this project.<br>
-  Full-power AI gateway: official models, no silent downgrades, no wrapper shells.<br>
-  One-line setup for Codex / Claude Code / Grok.
-</p>
+## Differences from the upstream baseline
 
-<p align="center">
-  <sub>
-    Theme install and API config stay separate — this project never rewrites your provider settings.
-  </sub>
-</p>
+- **One launcher:** the single <code>Codex 梦境皮肤</code> shortcut launches or reapplies the skin and ensures that the tray manager is running.
+- **One management surface:** image import, saved themes, reapply, pause, and full restore all live in the tray menu.
+- **Per-theme task strength:** each theme stores its own 0–100 background strength for Codex task/conversation routes.
+- **Live preview:** slider changes preview after about 200 ms; OK saves and Cancel restores the previous value.
+- **Task-route brightness fix:** strength survives injector payload normalization and produces valid browser color values instead of losing the readability overlay.
+- **Content-addressed images:** identical imported images are reused by SHA-256 instead of being archived repeatedly.
+- **Recoverable updates:** the managed runtime can be replaced without deleting active, saved, or imported themes.
 
-## Tested featured presets
+## Requirements
 
-### Gothic Void Crusade / 哥特虚空远征
+- A Windows system supported by the official Microsoft Store Codex app.
+- The official <code>OpenAI.Codex</code> app installed from Microsoft Store and registered for the current Windows user.
+- Node.js 22 or newer, with <code>node.exe</code> available on <code>PATH</code>.
+- Windows PowerShell 5.1 or newer.
+- Fully exit Codex and choose **退出托盘** before installation or update.
+- Normal operation does not require administrator rights or WindowsApps ownership changes.
 
-**Special thanks to [@seansong-ideogram](https://github.com/seansong-ideogram) for designing and contributing this striking, atmospheric original gothic science-fiction work to the community.** It leads the tested featured presets and is the default theme for fresh macOS installs.
+Preflight checks:
 
-<p align="center">
-  <img src="docs/images/presets/gothic-void-crusade-preview.jpg" alt="Gothic Void Crusade theme running in Codex" width="900"><br>
-  <sub>Real injected Codex home screen (preview only)</sub>
-</p>
+~~~powershell
+node --version
+Get-AppxPackage -Name OpenAI.Codex
+~~~
 
-After installing on macOS, switch from **已保存主题** or run:
+## Install
 
-```bash
-~/.codex/codex-dream-skin-studio/scripts/switch-theme-macos.sh \
-  --id preset-gothic-void-crusade
-```
+~~~powershell
+git clone https://github.com/angle1592/Codex-Dream-Skin.git
+cd .\Codex-Dream-Skin\windows
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-skin.ps1
+~~~
 
-### Arina Hashimoto / 桥本有菜
+You may also download and extract the repository ZIP, open PowerShell in its <code>windows</code> directory, and run the same installer command.
 
-“Arina Hashimoto / 桥本有菜” has been verified on the real Codex home screen in
-both light and dark appearances. The user-provided source PNG is `1672 × 941`;
-the preset's `2560 × 1440` JPEG is a standardized derived export that preserves
-the source's near-16:9 composition and does not add source detail. The sidebar,
-cards, project picker, and composer
-shown below are native Codex controls.
+The installer validates Codex and Node.js, saves a recoverable appearance baseline, installs the managed runtime under <code>%LOCALAPPDATA%\CodexDreamSkin\engine</code>, initializes the local theme store, and creates one desktop/Start-menu shortcut:
 
-<p align="center">
-  <img src="docs/images/presets/arina-hashimoto-light.jpg" alt="Arina Hashimoto theme tested in light appearance" width="900"><br>
-  <sub>Light · real injected screenshot; unsent input hidden during capture (preview only)</sub>
-</p>
+- <code>Codex 梦境皮肤</code>
 
-<p align="center">
-  <img src="docs/images/presets/arina-hashimoto-dark.jpg" alt="Arina Hashimoto theme tested in dark appearance" width="900"><br>
-  <sub>Dark · real injected screenshot; unsent input hidden during capture (preview only)</sub>
-</p>
+The install-time <code>Bypass</code> applies only to this explicit installer process. Daily shortcuts use <code>RemoteSigned</code>.
 
-Install from the repo and switch in one command on macOS:
+## Daily use
 
-```bash
-cd macos
-./scripts/install-dream-skin-macos.sh --no-launch
-~/.codex/codex-dream-skin-studio/scripts/switch-theme-macos.sh \
-  --id preset-arina-hashimoto
-```
+Double-click **Codex 梦境皮肤** whenever you want the skin. Do not launch stock Codex first; if Codex is already open, the custom launcher asks before restarting it into a skin-enabled session.
 
-Windows has a persistent local theme store and system-tray controls, and seeds
-the same Arina Hashimoto preset. For the first repo-based setup:
+Right-click the Codex Dream Skin tray icon:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\windows\scripts\install-dream-skin.ps1
-powershell -ExecutionPolicy Bypass -File .\windows\scripts\start-dream-skin.ps1
-```
+| Menu item | Purpose |
+|-----------|---------|
+| 应用或重新应用 | Reinject the active theme |
+| 暂停皮肤 | Temporarily show the stock appearance |
+| 更换背景图 | Import a UI-free PNG, JPEG, or WebP |
+| 任务页背景强度… | Adjust the current theme's task/conversation background |
+| 保存当前主题 | Save the active image and strength under a name |
+| 已保存主题 | Switch to a previously saved theme |
+| 打开图片文件夹 | Open the image archive, not the theme list |
+| 完全恢复 Codex | Stop Dream Skin and restore the stock appearance |
+| 退出托盘 | Exit the manager before install or update |
 
-After launch, switch directly through **已保存主题 → 桥本有菜**; no cross-folder
-manual import is required. **更换背景图** still imports your own UI-free
-wallpaper, which can then be saved for one-click switching.
+## Create and save a theme
 
-> The downloadable user source is [`docs/images/presets/arina-hashimoto-source.png`](./docs/images/presets/arina-hashimoto-source.png) (`1672 × 941`); the macOS one-click preset uses the normalized derived [`background.jpg`](./macos/presets/preset-arina-hashimoto/background.jpg) (`2560 × 1440`). Do not import either screenshot above: they contain real UI and are previews only. The background is a user-provided AI-generated example, not an official OpenAI/Codex visual or endorsement; confirm likeness and asset rights before redistributing it.
+1. Launch <code>Codex 梦境皮肤</code>.
+2. Right-click the tray icon and choose **更换背景图**.
+3. Select a UI-free wallpaper, not a screenshot containing Codex windows, text, buttons, or a composer.
+4. Open **任务页背景强度…** and choose the desired value.
+5. Choose **保存当前主题** and enter a name.
+6. Later, select that name under **已保存主题**; its image and task strength return together.
 
-## Concept gallery (not importable backgrounds)
+Copying an image into the image archive does not create a theme. You must choose **保存当前主题** before it appears under **已保存主题**.
 
-These eight images communicate achievable visual directions, but they are
-interface mockups rather than usable theme backgrounds. Generate a UI-free
-`2560 × 1440` image with the copy-ready [reference prompt guide](./docs/reference-background-prompt-guide.en.md)
-before importing a similar look. See the [concept prompt breakdown](./docs/background-generation-prompts.md)
-for the eight individual styles.
+Imported images must be PNG, JPEG, or WebP; no larger than 16 MB, 16384 pixels on either side, or 50 million total pixels.
 
-<p align="center">
-  <img src="docs/images/gallery/skin-01.jpg" alt="Pink Custom" width="900"><br>
-  <sub>Pink Custom</sub>
-</p>
+## Task background strength
 
-<p align="center">
-  <img src="docs/images/gallery/skin-02.jpg" alt="God of Wealth" width="900"><br>
-  <sub>God of Wealth</sub>
-</p>
+This setting affects **Codex task/conversation routes only**, not the Codex or ChatGPT home route.
 
-<p align="center">
-  <img src="docs/images/gallery/skin-03.jpg" alt="Red-White Sci-Fi" width="900"><br>
-  <sub>Red-White Sci-Fi</sub>
-</p>
+- <code>0</code>: hides the task background with the darkest overlay.
+- <code>55</code>: balanced default.
+- <code>100</code>: clearest background with a minimum readability layer.
+- Lower values are darker; higher values reveal more of the image.
 
-<p align="center">
-  <img src="docs/images/gallery/skin-04.jpg" alt="Clear Custom" width="900"><br>
-  <sub>Clear Custom</sub>
-</p>
+Live preview requires a skin session launched through <code>Codex 梦境皮肤</code>. If preview is unavailable, the value can still be saved and will take effect after reapply or the next skin launch. Each saved theme owns an independent value.
 
-<p align="center">
-  <img src="docs/images/gallery/skin-05.jpg" alt="Inspiration" width="900"><br>
-  <sub>Inspiration</sub>
-</p>
+## Update
 
-<p align="center">
-  <img src="docs/images/gallery/skin-06.jpg" alt="Purple Night" width="900"><br>
-  <sub>Purple Night</sub>
-</p>
+Exit the tray, fully close Codex, then:
 
-<p align="center">
-  <img src="docs/images/gallery/skin-07.jpg" alt="Cyan Virtual Singer" width="900"><br>
-  <sub>Cyan Virtual Singer</sub>
-</p>
+~~~powershell
+cd .\Codex-Dream-Skin
+git pull origin main
+cd .\windows
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-skin.ps1
+~~~
 
-<p align="center">
-  <img src="docs/images/gallery/skin-08.jpg" alt="Stage Black-Gold" width="900"><br>
-  <sub>Stage Black-Gold</sub>
-</p>
+Reinstallation replaces the managed runtime and rebuilds the shortcut without deleting active, saved, or imported themes.
 
-## What it does
+## Restore stock Codex
 
-- **Real UI** — Sidebar, cards, project picker, and input stay native. Not a fake full-window screenshot.
-- **Continuous wallpaper** — One 16:9 image spans the full window; adaptive focus, safe-area, and route treatment keep native content readable.
-- **Swappable art** — Drop in a UI-free image you like and it becomes your theme.
-- **Saved themes** — Switch local themes from the macOS menu bar or Windows system tray.
-- **Per-theme task strength** — On Windows, preview and save a separate Codex task/conversation background strength for each theme.
-- **Restorable** — One-click restore to the stock look.
-- **Safer path** — Local-loopback CDP inject only. No official binary or signature changes.
+Use **完全恢复 Codex** in the tray, or run from the <code>windows</code> directory:
 
-## Quick start
+~~~powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restore-dream-skin.ps1 -RestoreBaseTheme -PromptRestart
+~~~
 
-Platform scripts are ready — different plumbing, same goal: theme Codex.
+Add <code>-Uninstall</code> to also remove Dream Skin shortcuts.
 
-| Platform | Dir | Entry |
-|------|------|------|
-| Apple Silicon / Intel Mac | [`macos/`](./macos/) | Double-click `Install Codex Dream Skin.command` |
-| Windows | [`windows/`](./windows/) | `scripts/install-dream-skin.ps1` → `start-dream-skin.ps1` |
+## Files and logs
 
-More detail:
+| Purpose | Path |
+|---------|------|
+| State root | <code>%LOCALAPPDATA%\CodexDreamSkin</code> |
+| Active theme | <code>%LOCALAPPDATA%\CodexDreamSkin\active-theme</code> |
+| Saved themes | <code>%LOCALAPPDATA%\CodexDreamSkin\themes</code> |
+| Imported images | <code>%LOCALAPPDATA%\CodexDreamSkin\images</code> |
+| Injector log | <code>%LOCALAPPDATA%\CodexDreamSkin\injector.log</code> |
+| Injector error log | <code>%LOCALAPPDATA%\CodexDreamSkin\injector-error.log</code> |
+| Verification log | <code>%LOCALAPPDATA%\CodexDreamSkin\verify.log</code> |
 
-- Mac: [`macos/README.md`](./macos/README.md)
-- Windows: [`windows/SKILL.md`](./windows/SKILL.md)
-- Paths: [`docs/platforms.md`](./docs/platforms.md)
-- Copy-ready reference prompt guide: [`docs/reference-background-prompt-guide.en.md`](./docs/reference-background-prompt-guide.en.md)
-- Eight concept prompt breakdowns: [`docs/background-generation-prompts.md`](./docs/background-generation-prompts.md)
-- Project notes: [`docs/PROJECT.md`](./docs/PROJECT.md)
+See [windows/README.en.md](./windows/README.en.md) for deeper usage and troubleshooting.
 
-## Feedback & contributions
+## Validation
 
-- **Issues:** Use the [issue templates](./.github/ISSUE_TEMPLATE/) (bug / feature). Blank issues are disabled. Please try Verify / Restore self-checks before filing bugs.
-- **PRs:** Follow the [PR template](./.github/pull_request_template.md) — describe the change and tick the self-checks you actually ran (e.g. `macos/tests/run-tests.sh`, verify / restore).
+~~~powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\windows\tests\run-tests.ps1
+~~~
 
-## Safety
+After launching the skin:
 
-- CDP binds `127.0.0.1` only — avoid untrusted local processes while the theme runs.
-- Does not touch the official install directory or code signature.
-- **Never** rewrites API Key / Base URL; relay and theme stay separate.
+~~~powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\windows\scripts\verify-dream-skin.ps1 -ScreenshotPath "$env:TEMP\codex-dream-skin.png"
+~~~
 
-## License
+## Security and limitations
 
-- See [`macos/LICENSE`](./macos/LICENSE) (MIT) and [`macos/NOTICE.md`](./macos/NOTICE.md)
-- Unofficial; Codex and related rights belong to their owners.
-- People / IP material in bundled presets and previews is illustrative only — clear likeness, asset, and trademark rights before commercial redistribution.
+- CDP binds only to <code>127.0.0.1</code>; avoid untrusted local software while the skin is active.
+- The tool does not modify WindowsApps, <code>app.asar</code>, official binaries, or signatures.
+- It does not write API keys, Base URLs, or model-provider settings.
+- Codex updates may change renderer structure. Update this repository and rerun the installer if the skin stops applying.
+- Users supply their own theme images and are responsible for copyright, likeness, and trademark permissions before redistribution.
 
----
+## Upstream synchronization
 
-Star it, pick a look, and make Codex yours for today.
+This repository treats <code>origin/main</code> as the installable custom edition and does not open upstream PRs. Maintainers may retain the upstream remote:
+
+~~~powershell
+git remote add upstream https://github.com/Fei-Away/Codex-Dream-Skin.git
+git fetch upstream
+~~~
+
+Upstream changes should be synchronized selectively only after conflict review and the full Windows regression suite.
+
+## License and attribution
+
+This project is derived from [Fei-Away/Codex-Dream-Skin](https://github.com/Fei-Away/Codex-Dream-Skin) and follows the licenses and notices already present in the repository. Codex, OpenAI, and related marks and product rights belong to their respective owners.
