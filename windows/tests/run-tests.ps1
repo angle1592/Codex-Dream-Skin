@@ -922,9 +922,27 @@ try {
   }
   if (-not $traySource.Contains('$stateIsRunning') -or
     -not $traySource.Contains('Get-DreamSkinVerifiedCdpIdentity') -or
-    -not $traySource.Contains('请点击“应用或重新应用”') -or
     -not $traySource.Contains('请点击“保存当前主题”')) {
     throw 'Tray menu still reports stale state as running or claims an inactive theme is already applied.'
+  }
+  $savedStateCaptureIndex = $traySource.IndexOf(
+    '$savedStateIsRunning = $stateIsRunning', [System.StringComparison]::Ordinal)
+  $savedActionIndex = $traySource.IndexOf(
+    '$savedAction = {', [System.StringComparison]::Ordinal)
+  $savedRecoveryIndex = $traySource.IndexOf(
+    'Start-DreamSkinPowerShell -Script $startScript -Arguments @(''-Port'', "$Port", ''-PromptRestart'')',
+    [Math]::Max(0, $savedActionIndex),
+    [System.StringComparison]::Ordinal
+  )
+  $savedClosureIndex = $traySource.IndexOf(
+    '}.GetNewClosure()',
+    [Math]::Max(0, $savedActionIndex),
+    [System.StringComparison]::Ordinal
+  )
+  if ($savedStateCaptureIndex -lt 0 -or $savedActionIndex -le $savedStateCaptureIndex -or
+    $savedRecoveryIndex -le $savedActionIndex -or $savedClosureIndex -le $savedRecoveryIndex -or
+    $traySource.Contains('请点击“应用或重新应用”')) {
+    throw 'Saved-theme switching does not automatically recover a stopped Dream Skin session.'
   }
   if (-not [regex]::IsMatch(
       $traySource,

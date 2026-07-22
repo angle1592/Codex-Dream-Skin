@@ -77,6 +77,8 @@ Double-click `Codex 梦境皮肤`, then right-click its system-tray icon to:
 - Pause or resume the skin.
 - Reapply the theme or fully restore Codex.
 
+If a Codex update or stock launch has stopped the injector session, selecting a saved theme now starts recovery automatically and asks for restart when Codex is open. A running skin still switches themes live.
+
 Import a UI-free wallpaper rather than a preview containing a window, sidebar, composer, text, or buttons. Images may be at most 16 MB, 16384 pixels on either side, and 50 million total pixels.
 
 Task background strength ranges from 0 through 100: `0` hides the task background, `55` preserves the default look, and `100` is clearest while retaining a minimal readability layer. Dragging previews after roughly 200 ms; **OK** saves to the current theme and **Cancel** restores the state from when the dialog opened. Every saved theme keeps its own value. This setting affects only Codex task/conversation routes, not the Codex or ChatGPT home route.

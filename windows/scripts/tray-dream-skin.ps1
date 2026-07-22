@@ -151,13 +151,21 @@ try {
       foreach ($saved in $savedThemes) {
         $savedPath = $saved.Path
         $savedName = $saved.Name
+        $savedStateIsRunning = $stateIsRunning
         $savedAction = {
           $null = Use-DreamSkinSavedTheme -ThemeDirectory $savedPath -StateRoot $StateRoot
           Set-DreamSkinPaused -Paused $false -StateRoot $StateRoot | Out-Null
-          $message = if ($stateIsRunning) { "已应用：$savedName" } else {
-            '已选择：' + $savedName + '。请点击“应用或重新应用”。'
+          if ($savedStateIsRunning) {
+            $notify.ShowBalloonTip(2500, 'Codex Dream Skin', "已应用：$savedName", [System.Windows.Forms.ToolTipIcon]::Info)
+          } else {
+            $notify.ShowBalloonTip(
+              3500,
+              'Codex Dream Skin',
+              "已选择：$savedName。正在恢复皮肤；如果 Codex 已打开，请确认重启。",
+              [System.Windows.Forms.ToolTipIcon]::Info
+            )
+            Start-DreamSkinPowerShell -Script $startScript -Arguments @('-Port', "$Port", '-PromptRestart')
           }
-          $notify.ShowBalloonTip(2500, 'Codex Dream Skin', $message, [System.Windows.Forms.ToolTipIcon]::Info)
         }.GetNewClosure()
         $null = Add-DreamSkinTrayItem -Items $savedMenu.DropDownItems -Text $savedName -Action $savedAction
       }

@@ -26,6 +26,7 @@ The inherited <code>macos/</code> implementation remains in the tree, but this e
 ## Differences from the upstream baseline
 
 - **One launcher:** the single <code>Codex 梦境皮肤</code> shortcut launches or reapplies the skin and ensures that the tray manager is running.
+- **Self-healing theme switches:** if a Codex update stops the injector session, choosing a saved theme automatically starts recovery and prompts for restart instead of requiring a second Apply action.
 - **One management surface:** image import, saved themes, reapply, pause, and full restore all live in the tray menu.
 - **Per-theme task strength:** each theme stores its own 0–100 background strength for Codex task/conversation routes.
 - **Live preview:** slider changes preview after about 200 ms; OK saves and Cancel restores the previous value.
