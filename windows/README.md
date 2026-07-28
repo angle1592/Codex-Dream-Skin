@@ -8,32 +8,41 @@ Codex Dream Skin 通过本机回环 CDP 给官方 Codex Windows 桌面应用加�
 
 ## 运行要求
 
+- Windows 10 或更高版本（x64；安装器声明 Windows 10 为最低版本）。
 - 从 Microsoft Store 安装且已注册到当前用户的官方 `OpenAI.Codex` 应用。
-- Node.js 22 或更高版本，`node.exe` 可从 `PATH` 找到。
-- Windows PowerShell 5.1 或更高版本。
+- Release Setup.exe 已内置 Node.js；只有从源码运行时才需要 `PATH` 中有 Node.js 22 或更高版本。
+- Windows PowerShell 5.1 或更高版本（安装器会在后台调用，普通用户不需要打开它）。
+
+## Release 安装（推荐普通用户）
+
+普通用户请从 [GitHub Releases](https://github.com/Fei-Away/Codex-Dream-Skin/releases) 下载
+`CodexDreamSkin-Setup-vX.Y.Z.exe`，按 [`docs/install-windows.md`](../docs/install-windows.md) 的图形
+界面步骤安装。安装器自带固定 Node 运行时，不需要 clone 仓库或运行 `.ps1`；默认按当前用户安装，
+不应要求管理员权限。未签名的新下载偶尔会触发 SmartScreen，按“更多信息 → 仍要运行”即可，
+不要关闭 Defender。后续更新运行新的 Setup.exe 覆盖安装，主题和图片会保留。
 
 安装脚本需要在 Codex 完全退出后运行。普通使用不需要管理员权限，也不需要接管 WindowsApps 目录。
 
-## 安装
+## 高级：从源码安装
 
-在 PowerShell 中进入仓库的 `windows` 目录，然后运行：
+普通用户无需阅读本节。在 PowerShell 中进入仓库的 `windows` 目录，然后运行：
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-skin.ps1
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\install-dream-skin.ps1
 ```
 
-安装器会校验官方 Codex Store 包和 Node.js，保存可恢复的外观配置，并初始化本地主题仓库。默认只创建一个快捷方式：
+安装器会校验官方 Codex Store 包和 Node.js，保存可恢复的外观配置，并初始化本地主题仓库。默认还会创建这些快捷方式：
 
-- `Codex 梦境皮肤`：启动或重新应用皮肤，并自动确保主题管理托盘正在运行。
+- `Codex Dream Skin`：启动或重新应用皮肤。
+- `Codex Dream Skin - Tray`：打开系统托盘主题控制。
+- `Codex Dream Skin - Restore`：恢复官方外观并关闭已保存的 CDP 会话。
 
-主题切换、任务页强度和「完全恢复 Codex」都在托盘右键菜单中，不再需要单独的主题管理或恢复快捷方式。升级安装会移除 Dream Skin 自己创建的旧版英文和中文分离快捷方式。
-
-安装命令中的 `Bypass` 只作用于这一次由用户明确发起的安装进程。安装器会先校验运行时副本的 SHA-256，再仅对 `%LOCALAPPDATA%\CodexDreamSkin\engine` 中受管的 PowerShell 副本清除下载区标记。日常快捷方式使用 `RemoteSigned`，不会绕过系统或企业组策略。
+源码安装命令与日常快捷方式都使用 `RemoteSigned`，不会绕过系统或企业组策略。安装器会先校验运行时副本的 SHA-256，再仅对 `%LOCALAPPDATA%\CodexDreamSkin\engine` 中受管的 PowerShell 副本清除下载区标记。
 
 如需使用自定义端口，可以在安装时传入 `-Port`。端口范围必须是 `1024` 到 `65535`。
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-skin.ps1 -Port 9444
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\install-dream-skin.ps1 -Port 9444
 ```
 
 ## 更新
@@ -42,18 +51,18 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-
 
 ## 启动与验证
 
-推荐从唯一的 `Codex 梦境皮肤` 快捷方式启动。它发现 Codex 已经运行时会先询问是否重启，并在启动完成后自动打开主题管理托盘。普通 Codex 快捷方式仍可启动官方外观，但不会建立 Dream Skin 所需的本机 CDP 会话。
+推荐从 `Codex Dream Skin` 快捷方式启动。它发现 Codex 已经运行时会先询问是否重启。
 
 命令行启动：
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-dream-skin.ps1 -PromptRestart
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\start-dream-skin.ps1 -PromptRestart
 ```
 
 启动后运行验证脚本：
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-dream-skin.ps1 `
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\verify-dream-skin.ps1 `
   -ScreenshotPath "$env:TEMP\codex-dream-skin.png"
 ```
 
@@ -69,35 +78,48 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-dream-s
 
 ## 更换和保存主题
 
-双击 `Codex 梦境皮肤` 后，右键系统托盘图标可以：
+打开 `Codex Dream Skin - Tray` 后可以：
 
 - 更换 PNG、JPEG 或 WebP 背景图。
+- 导入普通 `.zip` 主题包到“已保存主题”（不支持 `.dreamskin`）。
 - 保存当前主题并从「已保存主题」切换。
-- 用「任务页背景强度…」单独调整当前主题的 Codex 任务/对话页面背景。
 - 暂停或继续显示皮肤。
 - 重新应用主题，或完整恢复 Codex。
 
-如果 Codex 更新或普通启动导致注入会话停止，选择“已保存主题”会自动启动恢复流程；Codex 已打开时会提示确认重启。运行中的皮肤仍然直接热切换。
+在 DreamSkin.cc 上，对包含完整三件套且通过审核的兼容主题点击“一键换肤”，浏览器会打开
+`dreamskin://apply?version=...`。Windows 会显示原生确认框；确认后客户端只从固定的
+`https://api.dreamskin.cc` 下载该版本，核对审核元数据、实际字节数和 SHA-256，再执行与手动 ZIP
+导入相同的清单、图片与 Safe CSS 校验并切换主题。Codex 已打开但没有可用皮肤会话时可能重启，确认前
+请保存输入。链接不能指定任意下载地址、文件路径或命令，也不能静默应用；不完整的旧主题仍会被客户端拒绝。
 
-导入图片必须是纯背景，不要使用包含窗口、侧栏、输入框、文字或按钮的效果截图。图片上限为 16 MB；宽或高不能超过 16384 像素，总像素不能超过 5000 万。
+导入图片必须是纯背景，不要使用包含窗口、侧栏、输入框、文字或按钮的效果截图。图片上限为 10 MB；宽或高不能超过 16384 像素，总像素不能超过 5000 万。
 
-任务页背景强度范围为 0–100：`0` 隐藏任务页背景，`55` 是默认效果，`100` 最清晰但仍保留最低限度的文字保护层。拖动约 200 毫秒后实时预览；「确定」保存到当前主题，「取消」恢复打开窗口前的状态。每个已保存主题有自己的数值，切换回来时会自动恢复。该设置只影响 Codex 任务/对话页面，不改变 Codex 首页或 ChatGPT 首页。
+新的正式 Studio ZIP 必须包含 `manifest.json`、非空 `theme.json`、非空 `theme.css`、恰好一张 `background.webp|jpg|png`，并可选
+带 `LICENSE.txt`、`manifest.sig`；文件直接位于根目录或只包一层主题目录。本地简化包也必须恰好包含
+`theme.json`、`theme.css` 与其引用图片，且只应来自可信来源。压缩文件上限 32 MiB、最多
+32 个条目、解压后最多 64 MiB；路径穿越、链接/reparse、嵌套压缩包和未注册文件会被拒绝。正式包还会
+核对平台、最低客户端版本及清单中每个负载文件的大小与 SHA-256。Safe CSS 会在本机导入和每次应用时
+复验，通过后只作用于 12 个注册部件；升级前已有的无 CSS legacy 主题仍可切换且不会注入额外 CSS。
+预留签名当前不验证。导入只加入主题库，不会改动当前主题；重复内容不会再次写入，同 ID 的不同包会
+保存为新的安全 ID。
 
-「打开图片文件夹」显示的是导入图片归档，不是主题列表；主题必须通过「保存当前主题」才会出现在「已保存主题」中。新版按 SHA-256 复用相同图片内容，重复导入或来回切换不会继续产生相同副本。升级不会自动删除旧版本已经留下的文件。
+也可从托盘选择“打开主题文件夹”，手动把已解压、且直接包含 `theme.json`、`theme.css` 与背景图的完整目录移动到
+`%LOCALAPPDATA%\CodexDreamSkin\themes\`。重新打开托盘菜单后即可看到；不要再套一层目录。手动目录
+不会经过 ZIP 导入器的归档校验，请只移动可信内容。
 
 ## 恢复与卸载快捷方式
 
 恢复官方外观；如果 Codex 正在运行，确认后关闭并重新打开：
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restore-dream-skin.ps1 `
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\restore-dream-skin.ps1 `
   -RestoreBaseTheme -PromptRestart
 ```
 
 如需同时删除 Dream Skin 创建的快捷方式，再增加 `-Uninstall`：
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restore-dream-skin.ps1 `
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\restore-dream-skin.ps1 `
   -RestoreBaseTheme -PromptRestart -Uninstall
 ```
 
@@ -149,17 +171,17 @@ Get-AppxPackage -Name OpenAI.Codex
 
 ### 验证找不到 CDP 端点
 
-通过 `Codex 梦境皮肤` 快捷方式启动 Codex，再运行验证脚本。普通 Codex 启动方式不会打开 Dream Skin 所需的调试会话。
+通过 `Codex Dream Skin` 快捷方式启动 Codex，再运行验证脚本。普通 Codex 启动方式不会打开 Dream Skin 所需的调试会话。
+
+Codex Store `26.715.10079.0` 起，owl runtime 可能把应用包激活参数转换为 `codex://` 路径。当前启动器会识别这一行为，并对同一个已验证 Store 包内的精确 `ChatGPT.exe` 尝试一次原始参数回退；不会修改文件或 WindowsApps 权限。
+
+Issue #235 的实机结果已经确认两种独立失败：`26.715.10079.0` 的 WindowsApps ACL 会返回 `access-denied`；`26.721.3404.0` 可保留原始 CDP 参数，但 production runtime 仍不监听端口。两种结果都意味着当前 Codex/Windows 组合无法在项目安全边界内启用皮肤；该回退目前是安全诊断与回滚机制，不是对受影响 owl 版本的兼容性保证。不要接管 WindowsApps 所有权或修改官方包；请保留完整错误并关注 Issue #235 的上游兼容状态。
 
 ### Codex 更新后皮肤失效
 
 重新运行安装器和启动快捷方式。脚本会重新发现当前注册的 Store 包，不依赖旧版本的可执行文件路径。
 
-### 图片文件夹里有很多重复图片
-
-旧版在每次切换或重新导入主题时都会用新文件名归档一次图片，即使内容完全相同，因此可能出现多组重复文件。新版会比较 SHA-256，相同内容只归档一次。为避免误删用户文件，安装和升级不会自动清理旧副本。
-
-提交问题时请从本定制仓库的 [Issue 提交页](https://github.com/angle1592/Codex-Dream-Skin/issues/new/choose) 选择 Bug 模板，附上系统版本、Codex 来源、复现步骤和相关日志片段。请删除密钥、`auth.json`、中转 token 和私人对话内容。
+提交问题时请从仓库的 [Issue 提交页](https://github.com/Fei-Away/Codex-Dream-Skin/issues/new/choose) 选择 Bug 模板，附上系统版本、Codex 来源、复现步骤和相关日志片段。请删除密钥、`auth.json`、中转 token 和私人对话内容。
 
 ## 安全边界
 

@@ -14,7 +14,6 @@
     "focusX": 0.72,
     "focusY": 0.45,
     "safeArea": "left",
-    "taskMode": "ambient",
-    "taskBackgroundStrength": 55
+    "taskMode": "ambient"
   }
 }
