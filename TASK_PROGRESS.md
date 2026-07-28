@@ -1,6 +1,6 @@
 # Task Progress
 
-Updated: 2026-07-28 19:58 HKT (Asia/Hong_Kong)
+Updated: 2026-07-28 20:15 HKT (Asia/Hong_Kong)
 
 ## Personal Windows Downstream v1.5.6 Sync
 
@@ -21,10 +21,14 @@ Updated: 2026-07-28 19:58 HKT (Asia/Hong_Kong)
   installer contracts, PowerShell parsing, shared-runtime sync, and diff checks.
 - [complete] Corrected the release installer so the single shortcut launches the skin
   while the optional sign-in task starts only the tray and does not auto-open Codex.
-- [in progress] Commit and push only to the personal repository, update GitHub About,
-  then prepare an independent install because the active Codex process cannot safely
-  replace its own managed runtime.
-- [pending] After Codex closes, install and verify a real Codex 26.721.x renderer.
+- [complete] Feature commit `d67f4da` was fast-forward pushed to personal
+  `origin/main`; GitHub About now identifies the Windows v1.5.6 downstream and
+  its single launcher, per-theme strength, and stopped-session recovery.
+- [ready] The independent PS7/PS5.1-parsed installer waits for the active Codex
+  process to close, then installs, checks runtime hashes and shortcut layout,
+  relaunches Codex, and captures a real renderer verification screenshot.
+- [pending] Close Codex once so the independent installer can complete the live
+  Codex 26.721.x verification without replacing the runtime used by this task.
 - [fact] No upstream PR, tag, Release, or public installer publication is in
   scope. The official source remains unchanged.
 Updated: 2026-07-25 08:31 HKT (Asia/Hong_Kong)
