@@ -53,6 +53,7 @@ try {
   if ($runtimeSourceFiles.Count -ne $runtimeEngineFiles.Count -or
     -not (Test-DreamSkinPathWithin -Path $engine.CommunityApply -Root $runtimeStateRoot) -or
     -not (Test-Path -LiteralPath $engine.CommunityApply -PathType Leaf) -or
+    -not (Test-DreamSkinPathWithin -Path $engine.Launcher -Root $runtimeStateRoot) -or
     -not (Test-DreamSkinPathWithin -Path $engine.Start -Root $runtimeStateRoot) -or
     -not (Test-DreamSkinPathWithin -Path $engine.Restore -Root $runtimeStateRoot) -or
     -not (Test-DreamSkinPathWithin -Path $engine.Tray -Root $runtimeStateRoot) -or
@@ -219,20 +220,17 @@ try {
     throw 'Installer does not reject an active source-bound tray before replacing the runtime engine.'
   }
   foreach ($requiredShortcutBinding in @(
-    '$startScript = $engine.Start',
-    '$restoreScript = $engine.Restore',
-    '$trayScript = $engine.Tray',
-    '$shortcut.WorkingDirectory = $engine.Root',
-    '$restore.WorkingDirectory = $engine.Root',
-    '$tray.WorkingDirectory = $engine.Root'
+    '$launchScript = $engine.Launcher',
+    '$shortcut.WorkingDirectory = $engine.Root'
   )) {
     if (-not $installSource.Contains($requiredShortcutBinding)) {
       throw "Installer shortcut still depends on its source checkout: $requiredShortcutBinding"
     }
   }
-  if ([regex]::Matches($installSource, '-ExecutionPolicy RemoteSigned').Count -ne 4 -or
+  if ([regex]::Matches($installSource, '-ExecutionPolicy RemoteSigned').Count -ne 2 -or
+    [regex]::Matches($installSource, [regex]::Escape('.CreateShortcut(')).Count -ne 1 -or
     $installSource.Contains('-ExecutionPolicy Bypass')) {
-    throw 'Installer shortcuts or tray launch still bypass the PowerShell execution policy.'
+    throw 'Installer must create one unified shortcut and keep shortcut/tray launches on RemoteSigned.'
   }
 
   Remove-Item -LiteralPath $runtimeSourceRoot -Recurse -Force
@@ -247,6 +245,7 @@ try {
     }
   }
   if (-not (Test-Path -LiteralPath $engine.CommunityApply -PathType Leaf) -or
+    -not (Test-Path -LiteralPath $engine.Launcher -PathType Leaf) -or
     -not (Test-Path -LiteralPath $engine.Start -PathType Leaf) -or
     -not (Test-Path -LiteralPath $engine.Restore -PathType Leaf) -or
     -not (Test-Path -LiteralPath $engine.Tray -PathType Leaf)) {
@@ -1031,9 +1030,11 @@ try {
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\config-utf8.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\image-metadata.mjs') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\injector.mjs') -Destination $releaseFixtureScripts -Force
+  Copy-Item -LiteralPath (Join-Path $Root 'scripts\launch-start-dream-skin.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\install-dream-skin.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\restore-dream-skin.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\start-dream-skin.ps1') -Destination $releaseFixtureScripts -Force
+  Copy-Item -LiteralPath (Join-Path $Root 'scripts\task-strength-dialog.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\theme-windows.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\tray-dream-skin.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\validate-safe-css-file.mjs') -Destination $releaseFixtureScripts -Force
@@ -1210,7 +1211,7 @@ try {
     -not $traySource.Contains('Get-DreamSkinSavedThemes -StateRoot $StateRoot -SkipImageMetadata')) {
     throw 'Tray menu metadata enumeration still performs full image parsing on every open.'
   }
-  foreach ($requiredReleaseAction in @('check-update.ps1', '检查更新', '打开 DreamSkin.cc', '登录时启动')) {
+  foreach ($requiredReleaseAction in @('check-update.ps1', '检查上游更新', '打开 DreamSkin.cc', '登录时启动')) {
     if (-not $traySource.Contains($requiredReleaseAction)) {
       throw "Tray release action is missing: $requiredReleaseAction"
     }
@@ -1401,6 +1402,7 @@ try {
   $rendererTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
     (Join-Path $PSScriptRoot 'renderer-inject.test.mjs'))
   if ($rendererTest.ExitCode -ne 0) { throw 'Renderer auxiliary-window regression test failed.' }
+  & (Join-Path $PSScriptRoot 'task-background-strength.tests.ps1') -Root $Root
   $bootstrapTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
     (Join-Path $PSScriptRoot 'injector-bootstrap.test.mjs'))
   if ($bootstrapTest.ExitCode -ne 0) { throw 'Injector early-bootstrap regression test failed.' }

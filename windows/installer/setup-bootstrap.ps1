@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
   [switch]$Install,
+  [switch]$LaunchSkin,
   [switch]$LaunchTray,
   [switch]$Uninstall,
   [switch]$Silent
@@ -54,7 +55,8 @@ function Wait-DreamSkinCodexClosedForSetup {
 }
 
 try {
-  if ($Install -and ($LaunchTray -or $Uninstall)) {
+  $actionCount = @($Install, $LaunchSkin, $LaunchTray, $Uninstall | Where-Object { $_ }).Count
+  if ($actionCount -gt 1) {
     throw 'Choose exactly one installer bootstrap action.'
   }
   if (-not (Test-Path -LiteralPath $commonPath -PathType Leaf) -or
@@ -128,8 +130,10 @@ try {
     'scripts\image-metadata.mjs',
     'scripts\injector.mjs',
     'scripts\install-dream-skin.ps1',
+    'scripts\launch-start-dream-skin.ps1',
     'scripts\restore-dream-skin.ps1',
     'scripts\start-dream-skin.ps1',
+    'scripts\task-strength-dialog.ps1',
     'scripts\theme-windows.ps1',
     'scripts\tray-dream-skin.ps1',
     'scripts\validate-safe-css-file.mjs',
@@ -161,7 +165,12 @@ try {
     }
   }
 
-  if ($LaunchTray -and -not (Test-DreamSkinTrayActive)) {
+  if ($LaunchSkin) {
+    $powershell = (Get-Command powershell.exe -ErrorAction Stop).Source
+    $argumentLine = '-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File ' +
+      (ConvertTo-DreamSkinProcessArgument -Value $engine.Launcher)
+    Start-Process -FilePath $powershell -ArgumentList $argumentLine -WindowStyle Hidden | Out-Null
+  } elseif ($LaunchTray -and -not (Test-DreamSkinTrayActive)) {
     $powershell = (Get-Command powershell.exe -ErrorAction Stop).Source
     $argumentLine = '-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File ' +
       (ConvertTo-DreamSkinProcessArgument -Value $engine.Tray)

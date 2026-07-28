@@ -1,5 +1,9 @@
 # Windows 安装与更新
 
+> [!IMPORTANT]
+> 本页是上游官方 Release 安装器说明。个人 Windows 分支的单一快捷方式、每主题任务页背景强度等功能，
+> 请按仓库根目录 `README.md` 从源码安装；直接安装上游 Setup.exe 会换回上游功能集。
+
 本页面向只想使用主题的普通用户。Release 安装器包含所需运行时，不需要 clone 仓库、安装全局
 Node.js 或执行 PowerShell 脚本。
 

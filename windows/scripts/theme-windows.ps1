@@ -1,4 +1,4 @@
-﻿if (-not (Get-Command Read-DreamSkinUtf8File -ErrorAction SilentlyContinue)) {
+if (-not (Get-Command Read-DreamSkinUtf8File -ErrorAction SilentlyContinue)) {
   . (Join-Path $PSScriptRoot 'config-utf8.ps1')
 }
 
@@ -193,6 +193,31 @@ function ConvertFrom-DreamSkinCommunityThemeMetadata {
     PackageSha256 = $sha256
     PackageBytes = $packageBytes
   }
+}
+
+function Get-DreamSkinTaskBackgroundStrength {
+  param([AllowNull()][object]$Theme)
+  $defaultStrength = 55
+  if ($null -eq $Theme) { return $defaultStrength }
+  $artProperty = $Theme.PSObject.Properties['art']
+  if ($null -eq $artProperty -or $null -eq $artProperty.Value) { return $defaultStrength }
+  $strengthProperty = $artProperty.Value.PSObject.Properties['taskBackgroundStrength']
+  if ($null -eq $strengthProperty -or $null -eq $strengthProperty.Value) { return $defaultStrength }
+  $value = $strengthProperty.Value
+  $numericTypes = @(
+    [System.TypeCode]::Byte, [System.TypeCode]::SByte,
+    [System.TypeCode]::Int16, [System.TypeCode]::UInt16,
+    [System.TypeCode]::Int32, [System.TypeCode]::UInt32,
+    [System.TypeCode]::Int64, [System.TypeCode]::UInt64,
+    [System.TypeCode]::Single, [System.TypeCode]::Double, [System.TypeCode]::Decimal
+  )
+  if ([System.Type]::GetTypeCode($value.GetType()) -notin $numericTypes) { return $defaultStrength }
+  $number = [double]$value
+  if ([double]::IsNaN($number) -or [double]::IsInfinity($number) -or
+    $number -ne [Math]::Floor($number) -or $number -lt 0 -or $number -gt 100) {
+    return $defaultStrength
+  }
+  return [int]$number
 }
 
 function Assert-DreamSkinNoReparseComponents {
@@ -394,6 +419,138 @@ function Write-DreamSkinTheme {
   $themePath = Join-Path $ThemeDirectory 'theme.json'
   Assert-DreamSkinNoReparseComponents -Path $themePath
   Write-DreamSkinUtf8FileAtomically -Path $themePath -Content ($json + "`r`n")
+}
+
+function Test-DreamSkinJsonObject {
+  param([AllowNull()][object]$Value)
+  return ($null -ne $Value -and ($Value -is [pscustomobject] -or $Value -is [hashtable]))
+}
+
+function Set-DreamSkinTaskBackgroundStrengthValue {
+  param(
+    [Parameter(Mandatory = $true)][object]$Theme,
+    [Parameter(Mandatory = $true)][int]$Strength
+  )
+  $artProperty = $Theme.PSObject.Properties['art']
+  if ($null -eq $artProperty -or -not (Test-DreamSkinJsonObject -Value $artProperty.Value)) {
+    $art = [pscustomobject]@{}
+    $Theme | Add-Member -NotePropertyName art -NotePropertyValue $art -Force
+  } else {
+    $art = $artProperty.Value
+  }
+  $art | Add-Member -NotePropertyName taskBackgroundStrength -NotePropertyValue $Strength -Force
+  return $Theme
+}
+
+function Get-DreamSkinTaskBackgroundStrengthState {
+  param([string]$StateRoot = (Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'))
+  $paths = Get-DreamSkinThemePaths -StateRoot $StateRoot
+  $active = Read-DreamSkinTheme -ThemeDirectory $paths.Active -SkipImageMetadata
+  $artProperty = $active.Theme.PSObject.Properties['art']
+  $artExists = $null -ne $artProperty
+  $artWasObject = $artExists -and (Test-DreamSkinJsonObject -Value $artProperty.Value)
+  $fieldProperty = if ($artWasObject) {
+    $artProperty.Value.PSObject.Properties['taskBackgroundStrength']
+  } else { $null }
+  $fieldExists = $null -ne $fieldProperty
+  return [pscustomobject]@{
+    ThemeId = "$($active.Theme.id)"
+    ThemeName = if ($active.Theme.name) { "$($active.Theme.name)" } else { "$($active.Theme.id)" }
+    ThemePath = $active.ThemePath
+    Strength = Get-DreamSkinTaskBackgroundStrength -Theme $active.Theme
+    ContentHash = (Get-FileHash -LiteralPath $active.ThemePath -Algorithm SHA256).Hash
+    ArtExists = $artExists
+    ArtWasObject = $artWasObject
+    RawArtValue = if ($artExists -and -not $artWasObject) { $artProperty.Value } else { $null }
+    FieldExists = $fieldExists
+    RawValue = if ($fieldExists) { $fieldProperty.Value } else { $null }
+  }
+}
+
+function Assert-DreamSkinTaskBackgroundStrengthSession {
+  param(
+    [Parameter(Mandatory = $true)][object]$State,
+    [Parameter(Mandatory = $true)][string]$ExpectedThemeId,
+    [Parameter(Mandatory = $true)][string]$ExpectedThemeHash
+  )
+  if ($State.ThemeId -cne $ExpectedThemeId) {
+    throw 'The active theme changed while task background strength was open. Reopen the setting.'
+  }
+  if ($State.ContentHash -cne $ExpectedThemeHash) {
+    throw 'The active theme was modified elsewhere. The newer theme was not overwritten.'
+  }
+}
+
+function Set-DreamSkinTaskBackgroundStrength {
+  param(
+    [Parameter(Mandatory = $true)][double]$Strength,
+    [Parameter(Mandatory = $true)][string]$ExpectedThemeId,
+    [Parameter(Mandatory = $true)][string]$ExpectedThemeHash,
+    [switch]$SyncSavedTheme,
+    [string]$StateRoot = (Join-Path $env:LOCALAPPDATA 'CodexDreamSkin')
+  )
+  if ([double]::IsNaN($Strength) -or [double]::IsInfinity($Strength)) {
+    throw 'Task background strength must be a finite number.'
+  }
+  $resolvedStrength = [int][Math]::Min(100, [Math]::Max(0, [Math]::Floor($Strength + 0.5)))
+  $paths = Get-DreamSkinThemePaths -StateRoot $StateRoot
+  $state = Get-DreamSkinTaskBackgroundStrengthState -StateRoot $StateRoot
+  Assert-DreamSkinTaskBackgroundStrengthSession -State $state -ExpectedThemeId $ExpectedThemeId `
+    -ExpectedThemeHash $ExpectedThemeHash
+
+  $savedTheme = $null
+  if ($SyncSavedTheme) {
+    $matches = @(Get-DreamSkinSavedThemes -StateRoot $StateRoot -SkipImageMetadata |
+      Where-Object { $_.Id -ceq $ExpectedThemeId })
+    if ($matches.Count -gt 1) {
+      throw 'Multiple saved themes use the active theme ID. No theme was synchronized.'
+    }
+    if ($matches.Count -eq 1) {
+      $savedTheme = Read-DreamSkinTheme -ThemeDirectory $matches[0].Path -SkipImageMetadata
+    }
+  }
+
+  $active = Read-DreamSkinTheme -ThemeDirectory $paths.Active -SkipImageMetadata
+  $updatedActiveTheme = Set-DreamSkinTaskBackgroundStrengthValue -Theme $active.Theme -Strength $resolvedStrength
+  Write-DreamSkinTheme -ThemeDirectory $paths.Active -Theme $updatedActiveTheme
+  if ($null -ne $savedTheme) {
+    $updatedSavedTheme = Set-DreamSkinTaskBackgroundStrengthValue -Theme $savedTheme.Theme -Strength $resolvedStrength
+    Write-DreamSkinTheme -ThemeDirectory $savedTheme.Directory -Theme $updatedSavedTheme
+  }
+  return Get-DreamSkinTaskBackgroundStrengthState -StateRoot $StateRoot
+}
+
+function Restore-DreamSkinTaskBackgroundStrength {
+  param(
+    [Parameter(Mandatory = $true)][object]$OriginalState,
+    [Parameter(Mandatory = $true)][string]$ExpectedThemeHash,
+    [string]$StateRoot = (Join-Path $env:LOCALAPPDATA 'CodexDreamSkin')
+  )
+  $currentState = Get-DreamSkinTaskBackgroundStrengthState -StateRoot $StateRoot
+  Assert-DreamSkinTaskBackgroundStrengthSession -State $currentState `
+    -ExpectedThemeId "$($OriginalState.ThemeId)" -ExpectedThemeHash $ExpectedThemeHash
+  $paths = Get-DreamSkinThemePaths -StateRoot $StateRoot
+  $active = Read-DreamSkinTheme -ThemeDirectory $paths.Active -SkipImageMetadata
+  $theme = $active.Theme
+
+  if (-not $OriginalState.ArtExists) {
+    $theme.PSObject.Properties.Remove('art')
+  } elseif (-not $OriginalState.ArtWasObject) {
+    $theme | Add-Member -NotePropertyName art -NotePropertyValue $OriginalState.RawArtValue -Force
+  } else {
+    $artProperty = $theme.PSObject.Properties['art']
+    if ($null -eq $artProperty -or -not (Test-DreamSkinJsonObject -Value $artProperty.Value)) {
+      throw 'The active theme art settings changed while task background strength was open.'
+    }
+    if ($OriginalState.FieldExists) {
+      $artProperty.Value | Add-Member -NotePropertyName taskBackgroundStrength `
+        -NotePropertyValue $OriginalState.RawValue -Force
+    } else {
+      $artProperty.Value.PSObject.Properties.Remove('taskBackgroundStrength')
+    }
+  }
+  Write-DreamSkinTheme -ThemeDirectory $paths.Active -Theme $theme
+  return Get-DreamSkinTaskBackgroundStrengthState -StateRoot $StateRoot
 }
 
 function Get-DreamSkinActiveThemeAppearance {

@@ -466,6 +466,12 @@ function normalizedChoice(value, name, choices, fallback) {
   return value;
 }
 
+function normalizedInteger(value, name, minimum, maximum, fallback) {
+  if (value === null || value === undefined || value === "") return fallback;
+  if (typeof value !== "number" || !Number.isFinite(value) || !Number.isInteger(value) ||
+    value < minimum || value > maximum) return fallback;
+  return value;
+}
 function normalizedText(value, name, fallback, maxLength = 120) {
   if (value === null || value === undefined || value === "") return fallback;
   if (typeof value !== "string" || value.length > maxLength || /[\u0000-\u001f]/.test(value)) {
@@ -576,6 +582,9 @@ export async function loadTheme(themeDir) {
       focusY: normalizedUnit(art.focusY, "art.focusY"),
       safeArea: normalizedChoice(art.safeArea, "art.safeArea", THEME_CHOICES.safeArea, "auto"),
       taskMode: normalizedChoice(art.taskMode, "art.taskMode", THEME_CHOICES.taskMode, "auto"),
+      taskBackgroundStrength: normalizedInteger(
+        art.taskBackgroundStrength, "art.taskBackgroundStrength", 0, 100, 55,
+      ),
     },
     colorMode: rawColors ? "explicit" : (paletteAccent ? "explicit" : "auto"),
     explicitColorKeys: rawColors

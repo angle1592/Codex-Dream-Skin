@@ -294,6 +294,10 @@ export async function runRendererRuntimeTest(assetRoot) {
     "--ds-theme-image-zoom": "1",
     "--ds-theme-image-dim": "0",
     "--ds-theme-image-task-intensity": "0.35",
+    "--ds-task-strength-sidebar-alpha": "0.56",
+    "--ds-task-strength-edge-alpha": "0.56",
+    "--ds-task-strength-mid-alpha": "0.44",
+    "--ds-task-strength-far-alpha": "0.32",
     "--ds-theme-density-scale": "standard",
     "--ds-theme-motion-level": "standard",
   };
@@ -335,6 +339,33 @@ export async function runRendererRuntimeTest(assetRoot) {
   vm.runInNewContext(full.payloadFor({ art: { taskMode: "full" } }), full.context);
   assert.equal(full.attrs.get("data-dream-task-mode"), "full");
   assert.equal(full.attrs.get("data-dream-art-task-mode"), "full");
+
+  const hiddenTaskBackground = makeFixture({ nativeAppearance: "dark" });
+  vm.runInNewContext(
+    hiddenTaskBackground.payloadFor({ art: { taskBackgroundStrength: 0 } }),
+    hiddenTaskBackground.context,
+  );
+  assert.equal(hiddenTaskBackground.rootStyle.values.get("--ds-task-strength-sidebar-alpha"), "1");
+  assert.equal(hiddenTaskBackground.rootStyle.values.get("--ds-task-strength-edge-alpha"), "1");
+  assert.equal(hiddenTaskBackground.rootStyle.values.get("--ds-task-strength-mid-alpha"), "1");
+  assert.equal(hiddenTaskBackground.rootStyle.values.get("--ds-task-strength-far-alpha"), "1");
+
+  const strongestTaskBackground = makeFixture({ nativeAppearance: "dark" });
+  vm.runInNewContext(
+    strongestTaskBackground.payloadFor({ art: { taskBackgroundStrength: 100 } }),
+    strongestTaskBackground.context,
+  );
+  assert.equal(strongestTaskBackground.rootStyle.values.get("--ds-task-strength-sidebar-alpha"), "0.25");
+  assert.equal(strongestTaskBackground.rootStyle.values.get("--ds-task-strength-edge-alpha"), "0.2");
+  assert.equal(strongestTaskBackground.rootStyle.values.get("--ds-task-strength-mid-alpha"), "0.1");
+  assert.equal(strongestTaskBackground.rootStyle.values.get("--ds-task-strength-far-alpha"), "0");
+
+  const invalidTaskBackground = makeFixture({ nativeAppearance: "dark" });
+  vm.runInNewContext(
+    invalidTaskBackground.payloadFor({ art: { taskBackgroundStrength: "100" } }),
+    invalidTaskBackground.context,
+  );
+  assert.equal(invalidTaskBackground.rootStyle.values.get("--ds-task-strength-sidebar-alpha"), "0.56");
 
   const explicitColors = {
     background: "#abc",

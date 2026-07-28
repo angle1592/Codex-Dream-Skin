@@ -49,16 +49,20 @@
   --ds-immersive-mid: rgb(var(--ds-bg-rgb) / .26);
   --ds-immersive-far: rgb(var(--ds-bg-rgb) / .16);
   --ds-immersive-sidebar: rgb(var(--ds-panel-rgb) / .46);
-  --ds-task-immersive-sidebar: rgb(var(--ds-panel-rgb) / .70);
+  --ds-task-strength-sidebar-alpha: .56;
+  --ds-task-strength-edge-alpha: .56;
+  --ds-task-strength-mid-alpha: .44;
+  --ds-task-strength-far-alpha: .32;
+  --ds-task-immersive-sidebar: rgb(var(--ds-panel-rgb) / var(--ds-task-strength-sidebar-alpha));
   --ds-immersive-chrome: rgb(var(--ds-panel-rgb) / .28);
   --ds-immersive-composer: rgb(var(--ds-panel-rgb) / .44);
   --ds-immersive-composer-solid: color-mix(in srgb,
     rgb(var(--ds-panel-2-rgb)) 88%,
     rgb(var(--ds-muted-rgb)) 12%);
   --ds-immersive-line: rgb(var(--ds-muted-rgb) / .42);
-  --ds-task-immersive-edge: rgb(var(--ds-bg-rgb) / .82);
-  --ds-task-immersive-mid: rgb(var(--ds-bg-rgb) / .74);
-  --ds-task-immersive-far: rgb(var(--ds-bg-rgb) / .60);
+  --ds-task-immersive-edge: rgb(var(--ds-bg-rgb) / var(--ds-task-strength-edge-alpha));
+  --ds-task-immersive-mid: rgb(var(--ds-bg-rgb) / var(--ds-task-strength-mid-alpha));
+  --ds-task-immersive-far: rgb(var(--ds-bg-rgb) / var(--ds-task-strength-far-alpha));
 }
 
 html[data-dream-skin="active"][data-dream-shell="light"] {
@@ -99,14 +103,14 @@ html[data-dream-skin="active"][data-dream-shell="light"] {
   --ds-immersive-mid: rgb(var(--ds-panel-rgb) / .28);
   --ds-immersive-far: rgb(var(--ds-panel-rgb) / .14);
   --ds-immersive-sidebar: rgb(var(--ds-panel-rgb) / .48);
-  --ds-task-immersive-sidebar: rgb(var(--ds-panel-rgb) / .72);
+  --ds-task-immersive-sidebar: rgb(var(--ds-panel-rgb) / var(--ds-task-strength-sidebar-alpha));
   --ds-immersive-chrome: rgb(var(--ds-panel-rgb) / .34);
   --ds-immersive-composer: rgb(var(--ds-panel-rgb) / .46);
   --ds-immersive-composer-solid: rgb(var(--ds-panel-rgb) / .74);
   --ds-immersive-line: rgb(var(--ds-accent-rgb) / .24);
-  --ds-task-immersive-edge: rgb(var(--ds-panel-rgb) / .86);
-  --ds-task-immersive-mid: rgb(var(--ds-panel-rgb) / .78);
-  --ds-task-immersive-far: rgb(var(--ds-panel-rgb) / .66);
+  --ds-task-immersive-edge: rgb(var(--ds-panel-rgb) / var(--ds-task-strength-edge-alpha));
+  --ds-task-immersive-mid: rgb(var(--ds-panel-rgb) / var(--ds-task-strength-mid-alpha));
+  --ds-task-immersive-far: rgb(var(--ds-panel-rgb) / var(--ds-task-strength-far-alpha));
 }
 
 /* Native token surfaces (dropdown/popover) resolve from Codex's own

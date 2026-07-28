@@ -650,6 +650,12 @@ export async function loadTheme(themeDir) {
     }
     return value;
   };
+  const integer = (value, minimum, maximum, fallback) => {
+    if (value === undefined) return fallback;
+    if (typeof value !== "number" || !Number.isFinite(value) || !Number.isInteger(value) ||
+      value < minimum || value > maximum) return fallback;
+    return value;
+  };
   const rawColors = raw.colors && typeof raw.colors === "object" && !Array.isArray(raw.colors)
     ? raw.colors : null;
   const colorKeys = [
@@ -666,6 +672,7 @@ export async function loadTheme(themeDir) {
     focusY: unit(rawArt.focusY, "art.focusY"),
     safeArea: choice(rawArt.safeArea, "art.safeArea", ["auto", "left", "right", "center", "none"]),
     taskMode: choice(rawArt.taskMode, "art.taskMode", ["auto", "ambient", "banner", "full", "off"]),
+    taskBackgroundStrength: integer(rawArt.taskBackgroundStrength, 0, 100, 55),
   };
   const theme = {
     schemaVersion: 1,

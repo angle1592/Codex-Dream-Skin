@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param([int]$Port = 9335)
 
 $ErrorActionPreference = 'Stop'
@@ -48,7 +48,7 @@ try {
   }
 
   $shell = New-Object -ComObject WScript.Shell
-  $message = "Codex Dream Skin failed to start.`r`n`r`n$($launchError.Exception.Message)`r`n`r`nLog: $logPath"
-  $null = $shell.Popup($message, 0, 'Codex Dream Skin', 16)
+  $message = "Codex 梦境皮肤启动失败。`r`n`r`n$($launchError.Exception.Message)`r`n`r`nLog: $logPath"
+  $null = $shell.Popup($message, 0, 'Codex 梦境皮肤', 16)
   exit 1
 }

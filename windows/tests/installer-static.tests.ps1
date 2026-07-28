@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param()
 
 $ErrorActionPreference = 'Stop'
@@ -166,6 +166,8 @@ foreach ($requiredRepairContract in @(
   'assets\safe-css-validator.mjs',
   'scripts\validate-safe-css-file.mjs',
   'scripts\apply-community-theme.ps1',
+  'scripts\launch-start-dream-skin.ps1',
+  'scripts\task-strength-dialog.ps1',
   'presets\preset-gothic-void-crusade\theme.json',
   'scripts\start-dream-skin.ps1',
   'scripts\check-update.ps1',
@@ -191,6 +193,18 @@ foreach ($requiredUninstallBinding in @(
   if (-not $bootstrap.Contains($requiredUninstallBinding)) {
     throw "Installer restore parameter binding is missing: $requiredUninstallBinding"
   }
+}
+if (-not $bootstrap.Contains('if ($LaunchSkin)') -or
+  -not $bootstrap.Contains('$engine.Launcher') -or
+  -not $bootstrap.Contains('if ($LaunchTray -and -not (Test-DreamSkinTrayActive))') -or
+  -not $bootstrap.Contains('$engine.Tray') -or
+  -not $bootstrap.Contains('Start-Process -FilePath $powershell -ArgumentList $argumentLine')) {
+  throw 'Installer bootstrap must keep unified launch and tray-only startup as separate actions.'
+}
+if ([regex]::Matches($definition, '(?m)^Name: "\{group\}\\Codex 梦境皮肤";[^\r\n]*-LaunchSkin').Count -ne 1 -or
+  [regex]::Matches($definition, '(?m)^Name: "\{userstartup\}\\Codex Dream Skin";[^\r\n]*-LaunchTray').Count -ne 1 -or
+  [regex]::Matches($definition, '(?m)^Name: "\{userstartup\}\\Codex Dream Skin";[^\r\n]*-LaunchSkin').Count -ne 0) {
+  throw 'Inno shortcuts do not preserve the one-click launcher and tray-only login behavior.'
 }
 if ($bootstrap.Contains('@restoreArguments')) {
   throw 'Installer restore switches must not use positional array splatting.'

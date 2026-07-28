@@ -9,8 +9,8 @@ Apply a reversible renderer skin through Chromium DevTools Protocol while launch
 
 ## Workflow
 
-1. Install Node.js 22 or newer, close Codex, then run `scripts/install-dream-skin.ps1` once. The installer preserves the user's native appearance settings, seeds the Arina Hashimoto theme, copies the runtime to `%LOCALAPPDATA%\CodexDreamSkin\engine`, and creates launch/restore/tray shortcuts that do not depend on the source checkout.
-2. Use the `Codex Dream Skin` shortcut, or run `%LOCALAPPDATA%\CodexDreamSkin\engine\scripts\start-dream-skin.ps1`. The shortcut asks before restarting an already-open Codex app; CLI callers must explicitly add `-RestartExisting`.
+1. Install Node.js 22 or newer, close Codex and the existing Dream Skin tray, then run `scripts/install-dream-skin.ps1` once. The installer preserves the user's native appearance settings, seeds the Arina Hashimoto theme, copies the runtime to `%LOCALAPPDATA%\CodexDreamSkin\engine`, and creates one `Codex 梦境皮肤` launcher that does not depend on the source checkout.
+2. Use the `Codex 梦境皮肤` shortcut, or run `%LOCALAPPDATA%\CodexDreamSkin\engine\scripts\launch-start-dream-skin.ps1`. The unified launcher applies or restarts the skin as needed and ensures the tray manager is available; restore remains inside that tray menu.
 3. Run `scripts/verify-dream-skin.ps1 -ScreenshotPath <absolute-path>` after launch. Treat a missing continuous wallpaper, home shell, native composer, sidebar layer, or injection marker as failure. The native suggestion count is responsive and may be two to four.
 4. To add a complete downloaded pack, use the tray's “导入主题 ZIP…”. Accept ordinary `.zip` only. Every new official Studio pack contains `manifest.json`, non-empty `theme.json`, non-empty locally validated `theme.css`, exactly one registered background, and optional license/signature files; the trusted local simplified format contains exactly `theme.json`, `theme.css`, and its referenced image. Import into saved themes without changing the active theme. A manually extracted complete three-file directory may instead be moved into the saved themes folder. Previously saved legacy themes without CSS remain switchable but inject no extra CSS.
 5. A compatible DreamSkin.cc theme can use the exact `dreamskin://apply?version=ver_...` link registered by Setup.exe. The handler always obtains approved metadata and the ZIP from the fixed API, requires `applyCompatible: true`, shows a native confirmation, verifies byte count and SHA-256, then reuses the strict importer before applying. It never accepts an arbitrary URL/path/command or a silent-apply flag.
@@ -31,6 +31,8 @@ Apply a reversible renderer skin through Chromium DevTools Protocol while launch
 - Keep the injection daemon running for navigation/reload resilience. Its state and logs live under `%LOCALAPPDATA%\CodexDreamSkin`.
 - The watcher registers a generation-checked early payload for connected renderers so reload/navigation can paint the skin before the normal load-event fallback; unsupported CDP targets fall back safely.
 - The active theme, saved themes, imported images, pause marker, and tray controls live under `%LOCALAPPDATA%\CodexDreamSkin`. Reject empty or over-10 MB images before copying or encoding them.
+- `art.taskBackgroundStrength` is a per-theme integer from 0 to 100. It controls only Codex task/conversation routes; the home route keeps its independent appearance. Preview through the tray dialog, persist only on confirmation, and restore the exact prior field state on cancel.
+- Switching a saved theme while the injector is stopped must launch the current managed runtime and reapply that theme; never leave a changed theme file with a falsely running status.
 - Theme-pack import does not support `.dreamskin`; reject traversal, links/reparse entries, nested archives, ambiguous roots, Windows-reserved paths, size/count abuse, and packs that fail the existing theme/image payload checks.
 - Community deep links accept only a canonical version ID. Reject redirects, non-approved or non-compatible metadata, mismatched IDs, non-boolean compatibility, unsafe display metadata, unexpected media types, byte/hash mismatches, and concurrent applies before changing the active theme.
 - Every managed-store write rejects junctions and other reparse points in every existing path component. Imports also use the bundled Node metadata parser before copying to reject dimensions above 16384px or 50MP.
@@ -59,6 +61,8 @@ node --check assets\renderer-inject.js
 - `assets/dream-reference.jpg`: pure 2560 × 1440 Arina Hashimoto wallpaper seeded as the default and as a saved theme; it contains no Codex UI.
 - `assets/theme.json`: shared adaptive theme contract for the seeded preset.
 - `scripts/theme-windows.ps1`: persistent active/saved theme store, safe image import, pause state, and preset seeding.
+- `scripts/launch-start-dream-skin.ps1`: unified desktop entry that applies the skin and ensures the tray manager is running.
+- `scripts/task-strength-dialog.ps1`: debounced live preview and per-theme task/conversation background-strength persistence.
 - `scripts/apply-community-theme.ps1`: fixed-origin, confirmed community download, integrity verification, strict ZIP import, apply, and rollback orchestration.
 - `scripts/tray-dream-skin.ps1`: Windows Forms tray for apply, pause, import, save, switch, and complete restore.
 - `references/qa-inventory.md`: required functional and visual signoff coverage.

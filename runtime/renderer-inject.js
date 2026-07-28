@@ -44,6 +44,8 @@
     "--ds-theme-image-focus-y", "--ds-theme-image-zoom",
     "--ds-theme-image-dim", "--ds-theme-image-task-intensity",
     "--ds-theme-density-scale", "--ds-theme-motion-level",
+    "--ds-task-strength-sidebar-alpha", "--ds-task-strength-edge-alpha",
+    "--ds-task-strength-mid-alpha", "--ds-task-strength-far-alpha",
   ];
   const selectorByKey = new Map(SELECTOR_CONTRACT.selectors.map((entry) => [entry.key, entry]));
   const stableTestidSelector = (testid) => SELECTOR_CONTRACT.stableTestids?.includes(testid)
@@ -98,6 +100,21 @@
   })();
 
   const cssString = (value) => JSON.stringify(String(value ?? ""));
+  const taskBackgroundStrength = (() => {
+    const requested = ART.taskBackgroundStrength;
+    return typeof requested === "number" && Number.isFinite(requested) &&
+      Number.isInteger(requested) && requested >= 0 && requested <= 100 ? requested : 55;
+  })();
+  const taskOverlayAlphas = (strength) => {
+    const anchors = strength <= 55
+      ? [[0, [1, 1, 1, 1]], [55, [0.56, 0.56, 0.44, 0.32]]]
+      : [[55, [0.56, 0.56, 0.44, 0.32]], [100, [0.25, 0.2, 0.1, 0]]];
+    const progress = (strength - anchors[0][0]) / (anchors[1][0] - anchors[0][0]);
+    return anchors[0][1].map((value, index) => {
+      const mixed = value + (anchors[1][1][index] - value) * progress;
+      return String(Number(mixed.toFixed(4)));
+    });
+  };
 
   const setStyleProperty = (root, name, value) => {
     if (root.style.getPropertyValue(name) !== value) {
@@ -293,6 +310,11 @@
     setStyleProperty(root, "--ds-theme-image-task-intensity", "0.35");
     setStyleProperty(root, "--ds-theme-density-scale", "standard");
     setStyleProperty(root, "--ds-theme-motion-level", "standard");
+    const taskAlphas = taskOverlayAlphas(taskBackgroundStrength);
+    setStyleProperty(root, "--ds-task-strength-sidebar-alpha", taskAlphas[0]);
+    setStyleProperty(root, "--ds-task-strength-edge-alpha", taskAlphas[1]);
+    setStyleProperty(root, "--ds-task-strength-mid-alpha", taskAlphas[2]);
+    setStyleProperty(root, "--ds-task-strength-far-alpha", taskAlphas[3]);
     const rgbVariables = {
       "--ds-bg-rgb": variables["--ds-bg"],
       "--ds-panel-rgb": variables["--ds-panel"],

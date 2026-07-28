@@ -72,7 +72,7 @@ Source: "{#StageRoot}\NOTICE.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#StageRoot}\payload\*"; DestDir: "{app}\payload"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\Codex Dream Skin"; Filename: "{#PowerShellPath}"; Parameters: "-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File ""{app}\setup-bootstrap.ps1"" -LaunchTray"; WorkingDir: "{app}"; IconFilename: "{app}\payload\assets\codex-dream-skin.ico"
+Name: "{group}\Codex 梦境皮肤"; Filename: "{#PowerShellPath}"; Parameters: "-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File ""{app}\setup-bootstrap.ps1"" -LaunchSkin"; WorkingDir: "{app}"; IconFilename: "{app}\payload\assets\codex-dream-skin.ico"
 Name: "{userstartup}\Codex Dream Skin"; Filename: "{#PowerShellPath}"; Parameters: "-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File ""{app}\setup-bootstrap.ps1"" -LaunchTray"; WorkingDir: "{app}"; IconFilename: "{app}\payload\assets\codex-dream-skin.ico"; Tasks: startup
 
 [Registry]
@@ -82,7 +82,7 @@ Root: HKCU; Subkey: "Software\Classes\dreamskin\DefaultIcon"; ValueType: string;
 Root: HKCU; Subkey: "Software\Classes\dreamskin\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{#PowerShellPath}"" -NoProfile -STA -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File ""{localappdata}\CodexDreamSkin\engine\scripts\apply-community-theme.ps1"" ""%1"""
 
 [Run]
-Filename: "{#PowerShellPath}"; Parameters: "-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File ""{app}\setup-bootstrap.ps1"" -LaunchTray"; WorkingDir: "{app}"; Description: "Launch Codex Dream Skin"; Flags: nowait postinstall skipifsilent
+Filename: "{#PowerShellPath}"; Parameters: "-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File ""{app}\setup-bootstrap.ps1"" -LaunchSkin"; WorkingDir: "{app}"; Description: "Launch Codex Dream Skin"; Flags: nowait postinstall skipifsilent
 
 [Code]
 function PowerShellArguments(

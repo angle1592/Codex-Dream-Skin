@@ -72,7 +72,9 @@ async function makeOfficial(name, options = {}) {
     name: options.themeName ?? "Studio Contract Theme",
     image: options.themeImage ?? "background.png",
     appearance: "auto",
-    art: { focusX: 0.7, focusY: 0.5, safeArea: "left", taskMode: "full" },
+    art: {
+      focusX: 0.7, focusY: 0.5, safeArea: "left", taskMode: "full", taskBackgroundStrength: 55,
+    },
     colors,
   };
   if (options.mutateTheme) options.mutateTheme(theme);
@@ -324,6 +326,15 @@ try {
   await expectRejected(wrongId.source, "macos", /themeId does not match/, "wrong-id");
   const wrongImage = await makeOfficial("wrong-image", { themeImage: "background.jpg" });
   await expectRejected(wrongImage.source, "macos", /image does not match/, "wrong-image");
+  const invalidStrength = await makeOfficial("invalid-task-strength", {
+    mutateTheme(theme) { theme.art.taskBackgroundStrength = 54.5; },
+  });
+  await expectRejected(
+    invalidStrength.source,
+    "windows",
+    /taskBackgroundStrength must be an integer between 0 and 100/,
+    "invalid-task-strength",
+  );
   const unknown = await makeOfficial("unknown-file", { unknownFile: true });
   await expectRejected(unknown.source, "macos", /unregistered file notes\.txt/, "unknown-file");
   const extraField = await makeOfficial("extra-field", { extraManifestField: true });

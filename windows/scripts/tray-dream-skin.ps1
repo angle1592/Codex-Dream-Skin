@@ -16,6 +16,7 @@ $powershell = (Get-Command powershell.exe -ErrorAction Stop).Source
 $startScript = Join-Path $PSScriptRoot 'start-dream-skin.ps1'
 $restoreScript = Join-Path $PSScriptRoot 'restore-dream-skin.ps1'
 $checkUpdateScript = Join-Path $PSScriptRoot 'check-update.ps1'
+$strengthDialogScript = Join-Path $PSScriptRoot 'task-strength-dialog.ps1'
 $startupShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Codex Dream Skin.lnk'
 
 $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
@@ -117,9 +118,22 @@ try {
     $paused = Test-DreamSkinPaused -StateRoot $StateRoot
     $state = $null
     try { $state = Read-DreamSkinState -Path $paths.State } catch {}
+    $stateIsRunning = $false
+    if ($null -ne $state) {
+      try {
+        $stateCodex = Get-DreamSkinCodexInstallFromState -State $state
+        $stateIdentity = if ($null -ne $stateCodex) {
+          Get-DreamSkinVerifiedCdpIdentity -Port ([int]$state.port) -Codex $stateCodex
+        } else { $null }
+        $injectorStartedAt = Get-DreamSkinProcessStartedAt -ProcessId ([int]$state.injectorPid)
+        $stateIsRunning = [bool]($null -ne $stateIdentity -and
+          $stateIdentity.BrowserId -ceq "$($state.browserId)" -and
+          $injectorStartedAt -ceq "$($state.injectorStartedAt)")
+      } catch {}
+    }
     $active = $null
     try { $active = Read-DreamSkinTheme -ThemeDirectory $paths.Active -SkipImageMetadata } catch {}
-    $status = if ($paused) { '状态：已暂停' } elseif ($state) { '状态：运行中' } else { '状态：未运行' }
+    $status = if ($paused) { '状态：已暂停' } elseif ($stateIsRunning) { '状态：运行中' } else { '状态：未运行' }
     if ($null -ne $active -and $null -ne $active.Theme -and $active.Theme.name) {
       $status += " · $($active.Theme.name)"
     }
@@ -199,6 +213,13 @@ try {
         $dialog.Dispose()
       }
     }
+    $strengthRunning = $stateIsRunning
+    $strengthAction = {
+      $strengthArguments = @()
+      if ($strengthRunning) { $strengthArguments += '-SkinRunning' }
+      Start-DreamSkinPowerShell -Script $strengthDialogScript -Arguments $strengthArguments
+    }.GetNewClosure()
+    $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '任务页背景强度…' -Action $strengthAction
     $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '导入主题 ZIP…' -Action {
       $dialog = [System.Windows.Forms.OpenFileDialog]::new()
       $dialog.Title = '选择 Codex Dream Skin 主题 ZIP'
@@ -244,12 +265,23 @@ try {
       foreach ($saved in $savedThemes) {
         $savedPath = $saved.Path
         $savedName = $saved.Name
+        $savedStateIsRunning = $stateIsRunning
         $savedAction = {
           $null = Invoke-DreamSkinTrayThemeOperation -Action {
             $null = Use-DreamSkinSavedTheme -ThemeDirectory $savedPath -StateRoot $StateRoot
             Set-DreamSkinPaused -Paused $false -StateRoot $StateRoot | Out-Null
           }
-          $notify.ShowBalloonTip(1800, 'Codex Dream Skin', "已应用：$savedName", [System.Windows.Forms.ToolTipIcon]::Info)
+          if ($savedStateIsRunning) {
+            $notify.ShowBalloonTip(1800, 'Codex Dream Skin', "已应用：$savedName", [System.Windows.Forms.ToolTipIcon]::Info)
+          } else {
+            $notify.ShowBalloonTip(
+              3500,
+              'Codex Dream Skin',
+              "已选择：$savedName。正在恢复皮肤；如果 Codex 已打开，请确认重启。",
+              [System.Windows.Forms.ToolTipIcon]::Info
+            )
+            Start-DreamSkinPowerShell -Script $startScript -Arguments @('-Port', "$Port", '-PromptRestart')
+          }
         }.GetNewClosure()
         $null = Add-DreamSkinTrayItem -Items $savedMenu.DropDownItems -Text $savedName -Action $savedAction
       }
@@ -265,7 +297,7 @@ try {
       Start-Process -FilePath explorer.exe -ArgumentList $imageDirectoryToken | Out-Null
     }
     [void]$menu.Items.Add([System.Windows.Forms.ToolStripSeparator]::new())
-    $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '检查更新…' -Action {
+    $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '检查上游更新…' -Action {
       Start-DreamSkinPowerShell -Script $checkUpdateScript -Arguments @('-Interactive')
     }
     $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '主题库 Gallery' -Action {

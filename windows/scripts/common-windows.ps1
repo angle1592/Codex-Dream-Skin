@@ -65,6 +65,7 @@ function Get-DreamSkinRuntimeEnginePaths {
     Runtime = Join-Path $root 'runtime'
     Version = Join-Path $root 'VERSION'
     CommunityApply = Join-Path $scripts 'apply-community-theme.ps1'
+    Launcher = Join-Path $scripts 'launch-start-dream-skin.ps1'
     Start = Join-Path $scripts 'start-dream-skin.ps1'
     Restore = Join-Path $scripts 'restore-dream-skin.ps1'
     Tray = Join-Path $scripts 'tray-dream-skin.ps1'
@@ -200,8 +201,10 @@ function Install-DreamSkinRuntimeEngine {
     'scripts\image-metadata.mjs',
     'scripts\injector.mjs',
     'scripts\install-dream-skin.ps1',
+    'scripts\launch-start-dream-skin.ps1',
     'scripts\restore-dream-skin.ps1',
     'scripts\start-dream-skin.ps1',
+    'scripts\task-strength-dialog.ps1',
     'scripts\theme-windows.ps1',
     'scripts\tray-dream-skin.ps1',
     'scripts\validate-safe-css-file.mjs',

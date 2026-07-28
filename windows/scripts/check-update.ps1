@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [switch]$Json,
   [switch]$Interactive
@@ -31,8 +31,8 @@ function Show-DreamSkinUpdateResult {
   Add-Type -AssemblyName System.Windows.Forms
   if ($Result.updateAvailable) {
     $choice = [System.Windows.Forms.MessageBox]::Show(
-      "Codex Dream Skin $($Result.latestVersion) is available.`r`n`r`nOpen the GitHub download page?",
-      'Codex Dream Skin Update',
+      "上游 Codex Dream Skin $($Result.latestVersion) 已发布。`r`n`r`n个人版请从自己的仓库更新源码；直接安装上游版本会失去个人功能。是否打开上游发布页？",
+      'Codex 梦境皮肤 · 上游更新',
       [System.Windows.Forms.MessageBoxButtons]::YesNo,
       [System.Windows.Forms.MessageBoxIcon]::Information
     )
@@ -42,8 +42,8 @@ function Show-DreamSkinUpdateResult {
     return
   }
   [void][System.Windows.Forms.MessageBox]::Show(
-    "Codex Dream Skin $($Result.currentVersion) is up to date.",
-    'Codex Dream Skin Update',
+    "当前基于的上游版本 $($Result.currentVersion) 已是最新。`r`n个人分支是否有更新，请查看自己的仓库。",
+    'Codex 梦境皮肤 · 上游更新',
     [System.Windows.Forms.MessageBoxButtons]::OK,
     [System.Windows.Forms.MessageBoxIcon]::Information
   )
@@ -85,7 +85,7 @@ try {
     Add-Type -AssemblyName System.Windows.Forms
     [void][System.Windows.Forms.MessageBox]::Show(
       "Could not check for updates.`r`n`r`n$($_.Exception.Message)",
-      'Codex Dream Skin Update',
+      'Codex 梦境皮肤 · 上游更新',
       [System.Windows.Forms.MessageBoxButtons]::OK,
       [System.Windows.Forms.MessageBoxIcon]::Warning
     )

@@ -1,6 +1,6 @@
 # Task Progress
 
-Updated: 2026-07-28 19:30 HKT (Asia/Hong_Kong)
+Updated: 2026-07-28 19:58 HKT (Asia/Hong_Kong)
 
 ## Personal Windows Downstream v1.5.6 Sync
 
@@ -12,12 +12,19 @@ Updated: 2026-07-28 19:30 HKT (Asia/Hong_Kong)
 - [complete] Started merge branch `agent/upstream-v1.5.6-custom`; all old
   generated/runtime conflicts were resolved to the official v1.5.6 baseline so
   personal features can be ported onto the shared `runtime/` architecture.
-- [in progress] Port the Windows-only per-theme task background strength,
+- [complete] Ported the Windows-only per-theme task background strength,
   live-preview dialog, consolidated launcher/management experience, downstream
-  README positioning, and stopped-session theme recovery.
-- [pending] Run Windows PowerShell and Node regressions, shared runtime sync
-  checks, install through an independent external task, verify a real Codex
-  26.721.x renderer, then commit and push only to the personal repository.
+  README positioning, stopped-session theme recovery, and a non-misleading
+  upstream-update notice onto the official shared-runtime architecture.
+- [verified] Complete Windows PowerShell 7 and 5.1 suites pass, along with
+  17 Windows Node tests, 48 portable macOS/shared tests (2 platform skips),
+  installer contracts, PowerShell parsing, shared-runtime sync, and diff checks.
+- [complete] Corrected the release installer so the single shortcut launches the skin
+  while the optional sign-in task starts only the tray and does not auto-open Codex.
+- [in progress] Commit and push only to the personal repository, update GitHub About,
+  then prepare an independent install because the active Codex process cannot safely
+  replace its own managed runtime.
+- [pending] After Codex closes, install and verify a real Codex 26.721.x renderer.
 - [fact] No upstream PR, tag, Release, or public installer publication is in
   scope. The official source remains unchanged.
 Updated: 2026-07-25 08:31 HKT (Asia/Hong_Kong)

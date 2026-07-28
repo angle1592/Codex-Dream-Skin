@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [string]$StateRoot = (Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'),
   [switch]$SkinRunning
