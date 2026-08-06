@@ -1,4 +1,10 @@
 . (Join-Path $PSScriptRoot 'config-utf8.ps1')
+# Nested Windows PowerShell 5.1 entrypoints can run with module autoloading
+# disabled or with Utility loaded only in a child scope. The runtime staging
+# transaction uses Get-FileHash, so make that dependency explicit and global.
+if (-not (Get-Command Get-FileHash -ErrorAction SilentlyContinue)) {
+  Import-Module Microsoft.PowerShell.Utility -Global -ErrorAction Stop
+}
 
 function Enter-DreamSkinOperationLock {
   param(
@@ -425,14 +431,18 @@ function Invoke-DreamSkinNative {
 function Import-DreamSkinPowerShellSecurityModule {
   $command = Get-Command Get-AuthenticodeSignature -CommandType Cmdlet -ErrorAction SilentlyContinue
   if ($command) { return }
+  if (Get-Module -Name Microsoft.PowerShell.Security) {
+    $command = Get-Command Get-AuthenticodeSignature -CommandType Cmdlet -ErrorAction SilentlyContinue
+    if ($command) { return }
+  }
   try {
-    Import-Module Microsoft.PowerShell.Security -ErrorAction Stop
+    Import-Module Microsoft.PowerShell.Security -Global -ErrorAction Stop
   } catch {
     $modulePath = Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Security\Microsoft.PowerShell.Security.psd1'
     if (-not (Test-Path -LiteralPath $modulePath -PathType Leaf)) {
       throw "PowerShell security module is unavailable: $($_.Exception.Message)"
     }
-    Import-Module $modulePath -ErrorAction Stop
+    Import-Module $modulePath -Global -ErrorAction Stop
   }
   $command = Get-Command Get-AuthenticodeSignature -CommandType Cmdlet -ErrorAction SilentlyContinue
   if (-not $command) {

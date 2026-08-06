@@ -235,7 +235,7 @@ if ($bootstrap.Contains('@restoreArguments')) {
 
 foreach ($requiredSecurityBootstrap in @(
   'function Import-DreamSkinPowerShellSecurityModule',
-  'Import-Module Microsoft.PowerShell.Security -ErrorAction Stop',
+  'Import-Module Microsoft.PowerShell.Security',
   "Join-Path `$PSHOME 'Modules\Microsoft.PowerShell.Security\Microsoft.PowerShell.Security.psd1'",
   'Get-Command Get-AuthenticodeSignature -CommandType Cmdlet',
   'Import-DreamSkinPowerShellSecurityModule',
