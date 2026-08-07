@@ -1,9 +1,24 @@
 . (Join-Path $PSScriptRoot 'config-utf8.ps1')
-# Nested Windows PowerShell 5.1 entrypoints can run with module autoloading
-# disabled or with Utility loaded only in a child scope. The runtime staging
-# transaction uses Get-FileHash, so make that dependency explicit and global.
-if (-not (Get-Command Get-FileHash -ErrorAction SilentlyContinue)) {
-  Import-Module Microsoft.PowerShell.Utility -Global -ErrorAction Stop
+
+function Get-DreamSkinSha256Hash {
+  param([Parameter(Mandatory = $true)][string]$Path)
+  $fullPath = [System.IO.Path]::GetFullPath($Path)
+  if (-not [System.IO.File]::Exists($fullPath)) {
+    throw "File does not exist: $fullPath"
+  }
+  $stream = [System.IO.File]::Open(
+    $fullPath,
+    [System.IO.FileMode]::Open,
+    [System.IO.FileAccess]::Read,
+    [System.IO.FileShare]::Read
+  )
+  $hasher = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    return ([System.BitConverter]::ToString($hasher.ComputeHash($stream))).Replace('-', '')
+  } finally {
+    $hasher.Dispose()
+    $stream.Dispose()
+  }
 }
 
 function Enter-DreamSkinOperationLock {
@@ -275,8 +290,8 @@ function Install-DreamSkinRuntimeEngine {
       $relative = $sourceFile.FullName.Substring($sourcePrefix.Length)
       $stagedFile = Join-Path $stagingRoot $relative
       if (-not (Test-Path -LiteralPath $stagedFile -PathType Leaf) -or
-        (Get-FileHash -Algorithm SHA256 -LiteralPath $sourceFile.FullName).Hash -cne
-        (Get-FileHash -Algorithm SHA256 -LiteralPath $stagedFile).Hash) {
+        (Get-DreamSkinSha256Hash -Path $sourceFile.FullName) -cne
+        (Get-DreamSkinSha256Hash -Path $stagedFile)) {
         throw "Staged Dream Skin runtime failed hash verification: $relative"
       }
     }

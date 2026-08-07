@@ -9,10 +9,11 @@ $builderPath = Join-Path $installerRoot 'build-release.ps1'
 $bootstrapPath = Join-Path $installerRoot 'setup-bootstrap.ps1'
 $communityApplyPath = Join-Path $windowsRoot 'scripts\apply-community-theme.ps1'
 $commonPath = Join-Path $windowsRoot 'scripts\common-windows.ps1'
+$themePath = Join-Path $windowsRoot 'scripts\theme-windows.ps1'
 $manifestPath = Join-Path $installerRoot 'node-runtime.json'
 $builderAst = $null
 
-foreach ($scriptPath in @($builderPath, $bootstrapPath, $communityApplyPath, $commonPath)) {
+foreach ($scriptPath in @($builderPath, $bootstrapPath, $communityApplyPath, $commonPath, $themePath)) {
   if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) {
     throw "Required installer PowerShell does not exist: $scriptPath"
   }
@@ -44,6 +45,8 @@ $definition = [System.IO.File]::ReadAllText($definitionPath)
 $builder = [System.IO.File]::ReadAllText($builderPath)
 $bootstrap = [System.IO.File]::ReadAllText($bootstrapPath)
 $common = [System.IO.File]::ReadAllText($commonPath)
+$communityApply = [System.IO.File]::ReadAllText($communityApplyPath)
+$theme = [System.IO.File]::ReadAllText($themePath)
 if ($definition.Contains('-ExecutionPolicy Bypass') -or
   $builder.Contains('-ExecutionPolicy Bypass') -or
   $bootstrap.Contains('-ExecutionPolicy Bypass') -or
@@ -231,6 +234,16 @@ if ([regex]::Matches($definition, '(?m)^Name: "\{group\}\\Codex 梦境皮肤";[^
 }
 if ($bootstrap.Contains('@restoreArguments')) {
   throw 'Installer restore switches must not use positional array splatting.'
+}
+
+if (-not $common.Contains('function Get-DreamSkinSha256Hash') -or
+  -not $common.Contains('[System.Security.Cryptography.SHA256]::Create()')) {
+  throw 'Managed runtime hashing must use the project-owned SHA-256 helper.'
+}
+foreach ($runtimeHashSource in @($common, $communityApply, $theme)) {
+  if ($runtimeHashSource.Contains('Get-FileHash')) {
+    throw 'Installed runtime scripts must not depend on the optional Get-FileHash cmdlet.'
+  }
 }
 
 foreach ($requiredSecurityBootstrap in @(
