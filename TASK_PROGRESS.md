@@ -7,6 +7,9 @@
 - [preserved] The one-click Chinese launcher, integrated restore menu, per-theme
   `art.taskBackgroundStrength`, stopped-session recovery, and project-owned
   SHA-256 helper remain present after the merge.
+- [migrated] Existing managed themes created before schema versioning gain
+  `schemaVersion: 1` during initialization; unsupported future versions remain
+  fail-closed instead of being silently rewritten.
 - [verified] Runtime asset sync, 25 Windows/tool Node tests, Windows PowerShell
   5.1 managed-runtime replacement, installer static contracts, and per-theme
   task-strength regressions pass.

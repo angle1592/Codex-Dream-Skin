@@ -480,6 +480,23 @@ function Write-DreamSkinTheme {
   Write-DreamSkinUtf8FileAtomically -Path $themePath -Content ($json + "`r`n")
 }
 
+function Update-DreamSkinManagedThemeSchema {
+  param([Parameter(Mandatory = $true)][string]$ThemeDirectory)
+  $themePath = Join-Path $ThemeDirectory 'theme.json'
+  if (-not (Test-Path -LiteralPath $themePath -PathType Leaf)) { return $false }
+  $loaded = Read-DreamSkinTheme -ThemeDirectory $ThemeDirectory -SkipImageMetadata
+  $schemaProperty = $loaded.Theme.PSObject.Properties['schemaVersion']
+  if ($null -eq $schemaProperty) {
+    $loaded.Theme | Add-Member -NotePropertyName schemaVersion -NotePropertyValue 1 -Force
+    Write-DreamSkinTheme -ThemeDirectory $loaded.Directory -Theme $loaded.Theme
+    return $true
+  }
+  if ($schemaProperty.Value -ne 1) {
+    throw "Managed theme must use schemaVersion 1: $themePath"
+  }
+  return $false
+}
+
 function Test-DreamSkinJsonObject {
   param([AllowNull()][object]$Value)
   return ($null -ne $Value -and ($Value -is [pscustomobject] -or $Value -is [hashtable]))
@@ -721,6 +738,13 @@ function Initialize-DreamSkinThemeStore {
         Copy-Item -LiteralPath $sourcePack.ThemePath -Destination $activeTheme -Force
       }
     }
+  }
+  $managedThemeDirectories = @($paths.Active) + @(
+    Get-ChildItem -LiteralPath $paths.Saved -Directory -Force -ErrorAction Stop |
+      ForEach-Object { $_.FullName }
+  )
+  foreach ($managedThemeDirectory in $managedThemeDirectories) {
+    $null = Update-DreamSkinManagedThemeSchema -ThemeDirectory $managedThemeDirectory
   }
   $null = Read-DreamSkinTheme -ThemeDirectory $paths.Active
   return $paths

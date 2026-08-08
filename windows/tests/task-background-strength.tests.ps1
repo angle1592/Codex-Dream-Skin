@@ -33,6 +33,43 @@ try {
     $theme | ConvertTo-Json -Depth 8 | ConvertFrom-Json
   )
 
+  $legacy = Join-Path $stateRoot 'themes\legacy-theme'
+  New-Item -ItemType Directory -Force -Path $legacy | Out-Null
+  [System.IO.File]::WriteAllBytes((Join-Path $legacy 'background.png'), $imageBytes)
+  $legacyTheme = [pscustomobject]@{
+    id = 'legacy-theme'
+    name = '旧格式主题'
+    image = 'background.png'
+    appearance = 'auto'
+    art = [pscustomobject]@{ safeArea = 'auto'; taskMode = 'auto' }
+  }
+  Write-DreamSkinTheme -ThemeDirectory $legacy -Theme $legacyTheme
+  if (-not (Update-DreamSkinManagedThemeSchema -ThemeDirectory $legacy)) {
+    throw 'A managed legacy theme was not migrated to schemaVersion 1.'
+  }
+  $migratedLegacy = Read-DreamSkinTheme -ThemeDirectory $legacy -SkipImageMetadata
+  if ($migratedLegacy.Theme.schemaVersion -ne 1) {
+    throw 'Managed legacy theme migration did not persist schemaVersion 1.'
+  }
+  if (Update-DreamSkinManagedThemeSchema -ThemeDirectory $legacy) {
+    throw 'Managed theme schema migration must be idempotent.'
+  }
+
+  $future = Join-Path $stateRoot 'themes\future-theme'
+  New-Item -ItemType Directory -Force -Path $future | Out-Null
+  [System.IO.File]::WriteAllBytes((Join-Path $future 'background.png'), $imageBytes)
+  $futureTheme = $theme | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+  $futureTheme.schemaVersion = 2
+  Write-DreamSkinTheme -ThemeDirectory $future -Theme $futureTheme
+  $futureRejected = $false
+  try { $null = Update-DreamSkinManagedThemeSchema -ThemeDirectory $future } catch {
+    $futureRejected = $true
+  }
+  if (-not $futureRejected) {
+    throw 'Managed theme migration must reject unsupported future schemas.'
+  }
+  Remove-Item -LiteralPath $future -Recurse -Force
+
   $initial = Get-DreamSkinTaskBackgroundStrengthState -StateRoot $stateRoot
   if ($initial.Strength -ne 55 -or $initial.FieldExists) {
     throw 'Legacy themes must default to strength 55 without inventing a persisted field.'
