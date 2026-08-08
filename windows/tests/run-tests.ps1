@@ -1325,6 +1325,12 @@ try {
     throw 'Start lost the any-registered endpoint fallback for Store auto-updates.'
   }
   $verifyScriptSource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\verify-dream-skin.ps1')
+  if ($verifyScriptSource -notmatch '\[int\]\$OperationLockTimeoutMilliseconds\s*=\s*30000' -or
+    -not $verifyScriptSource.Contains(
+      'Enter-DreamSkinOperationLock -TimeoutMilliseconds $OperationLockTimeoutMilliseconds'
+    )) {
+    throw 'Verification must wait briefly for startup to release the shared operation lock.'
+  }
   if (-not $verifyScriptSource.Contains(". (Join-Path `$PSScriptRoot 'theme-windows.ps1')")) {
     throw 'Verify must dot-source theme-windows.ps1 before using theme store helpers such as Get-DreamSkinThemePaths.'
   }

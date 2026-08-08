@@ -16,6 +16,9 @@
 - [fixed live-install race] Normal startup now waits up to 30 seconds for the
   short-lived tray initialization lock instead of failing immediately when the
   installer starts the tray and launcher back-to-back.
+- [fixed verification race] Standalone verification also waits up to 30 seconds
+  for startup to finish its own renderer check, avoiding a false installation
+  failure when an external updater immediately performs a second verification.
 - [pending live] The installed v1.5.6 engine still requires a clean external
   replacement and a real Codex renderer screenshot before v1.5.12 can be
   declared active on this machine.

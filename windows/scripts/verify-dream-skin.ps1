@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
   [int]$Port = 9335,
-  [string]$ScreenshotPath
+  [string]$ScreenshotPath,
+  [ValidateRange(0, 300000)][int]$OperationLockTimeoutMilliseconds = 30000
 )
 
 $ErrorActionPreference = 'Stop'
@@ -10,7 +11,7 @@ $injector = Join-Path $PSScriptRoot 'injector.mjs'
 . (Join-Path $PSScriptRoot 'common-windows.ps1')
 . (Join-Path $PSScriptRoot 'theme-windows.ps1')
 
-$operationLock = Enter-DreamSkinOperationLock
+$operationLock = Enter-DreamSkinOperationLock -TimeoutMilliseconds $OperationLockTimeoutMilliseconds
 $verifyExitCode = 1
 try {
   $StatePath = Join-Path $env:LOCALAPPDATA 'CodexDreamSkin\state.json'
