@@ -4,6 +4,9 @@ param([Parameter(Mandatory = $true)][string]$Root)
 $ErrorActionPreference = 'Stop'
 $startPath = Join-Path $Root 'scripts\start-dream-skin.ps1'
 $source = [System.IO.File]::ReadAllText($startPath)
+if ($source -notmatch '\[int\]\$OperationLockTimeoutMilliseconds\s*=\s*30000') {
+  throw 'Normal Dream Skin startup must wait briefly for tray initialization to release the operation lock.'
+}
 $dotSourcePattern = '(?m)^\.\s+\(Join-Path \$PSScriptRoot ''(?:common-windows|theme-windows)\.ps1''\)\r?\n'
 if ([regex]::Matches($source, $dotSourcePattern).Count -ne 2) {
   throw 'Start readiness fixture could not isolate the two runtime imports.'

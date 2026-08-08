@@ -13,6 +13,9 @@
 - [verified] Runtime asset sync, 25 Windows/tool Node tests, Windows PowerShell
   5.1 managed-runtime replacement, installer static contracts, and per-theme
   task-strength regressions pass.
+- [fixed live-install race] Normal startup now waits up to 30 seconds for the
+  short-lived tray initialization lock instead of failing immediately when the
+  installer starts the tray and launcher back-to-back.
 - [pending live] The installed v1.5.6 engine still requires a clean external
   replacement and a real Codex renderer screenshot before v1.5.12 can be
   declared active on this machine.

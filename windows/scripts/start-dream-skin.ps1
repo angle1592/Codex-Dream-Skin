@@ -5,7 +5,7 @@ param(
   [switch]$PromptRestart,
   [string]$ProfilePath,
   [switch]$ForegroundInjector,
-  [ValidateRange(0, 300000)][int]$OperationLockTimeoutMilliseconds = 0,
+  [ValidateRange(0, 300000)][int]$OperationLockTimeoutMilliseconds = 30000,
   [switch]$RequireUnpaused
 )
 
