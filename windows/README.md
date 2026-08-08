@@ -144,3 +144,81 @@ powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\windows\scripts\
 ```
 
 恢复会关闭受管注入会话并恢复安装前外观；已保存主题和图片默认保留。
+
+如需同时删除 Dream Skin 创建的快捷方式，再增加 `-Uninstall`：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\restore-dream-skin.ps1 `
+  -RestoreBaseTheme -PromptRestart -Uninstall
+```
+
+`-RecoverConfigBackup` 用于明确恢复安装前的完整 `config.toml` 备份。它会先保存当前配置，只应在配置损坏且普通的 `-RestoreBaseTheme` 无法解决时使用。
+
+## 文件与日志位置
+
+| 用途 | 路径 |
+|------|------|
+| Dream Skin 状态根目录 | `%LOCALAPPDATA%\CodexDreamSkin` |
+| 当前主题 | `%LOCALAPPDATA%\CodexDreamSkin\active-theme` |
+| 已保存主题 | `%LOCALAPPDATA%\CodexDreamSkin\themes` |
+| 导入图片归档 | `%LOCALAPPDATA%\CodexDreamSkin\images` |
+| 会话状态 | `%LOCALAPPDATA%\CodexDreamSkin\state.json` |
+| 注入器日志 | `%LOCALAPPDATA%\CodexDreamSkin\injector.log` |
+| 注入器错误日志 | `%LOCALAPPDATA%\CodexDreamSkin\injector-error.log` |
+| 验证日志 | `%LOCALAPPDATA%\CodexDreamSkin\verify.log` |
+| Codex 配置 | `%USERPROFILE%\.codex\config.toml` |
+
+更完整的平台路径说明见 [`../docs/platforms.md`](../docs/platforms.md)。
+
+## 常见问题
+
+### 找不到 Node.js
+
+运行 `node --version`，确认版本为 22 或更高，并重新打开 PowerShell 让新的 `PATH` 生效。
+
+### 找不到官方 Codex 包
+
+运行：
+
+```powershell
+Get-AppxPackage -Name OpenAI.Codex
+```
+
+脚本只接受已注册的官方 Store 包，不会从任意可执行文件路径启动 Codex。
+
+### 安装器要求关闭 Codex
+
+关闭所有 Codex 窗口后再运行安装器。安装期间必须保持配置和应用状态稳定。
+
+### 杀毒软件报告旧版托盘快捷方式
+
+旧版托盘快捷方式同时使用隐藏 PowerShell 和 `ExecutionPolicy Bypass`，可能触发基于行为特征的 LNK 告警。不要直接加入白名单；更新源码并重新运行安装器，让快捷方式改用 `RemoteSigned`。如果新版仍然报警，请保留隔离状态，并在 Issue 中附上杀毒软件名称、版本、告警名称和快捷方式属性，不要上传密钥或私人数据。
+
+### 端口被占用
+
+没有显式指定 `-Port` 时，启动脚本会从默认端口 `9335` 开始寻找空闲端口。显式端口被其他进程占用时，改用另一个端口，不要关闭身份不明的监听进程。
+
+### 验证找不到 CDP 端点
+
+通过 `Codex Dream Skin` 快捷方式启动 Codex，再运行验证脚本。普通 Codex 启动方式不会打开 Dream Skin 所需的调试会话。
+
+Codex Store `26.715.10079.0` 起，owl runtime 可能把应用包激活参数转换为 `codex://` 路径。当前启动器会识别这一行为，并对同一个已验证 Store 包内的精确 `ChatGPT.exe` 尝试一次原始参数回退；不会修改文件或 WindowsApps 权限。
+
+Issue #235 的实机结果已经确认两种独立失败：`26.715.10079.0` 的 WindowsApps ACL 会返回 `access-denied`；`26.721.3404.0` 可保留原始 CDP 参数，但 production runtime 仍不监听端口。两种结果都意味着当前 Codex/Windows 组合无法在项目安全边界内启用皮肤；该回退目前是安全诊断与回滚机制，不是对受影响 owl 版本的兼容性保证。不要接管 WindowsApps 所有权或修改官方包；请保留完整错误并关注 Issue #235 的上游兼容状态。
+
+### Codex 更新后皮肤失效
+
+重新运行安装器和启动快捷方式。脚本会重新发现当前注册的 Store 包，不依赖旧版本的可执行文件路径。
+
+提交问题时请从仓库的 [Issue 提交页](https://github.com/Fei-Away/Codex-Dream-Skin/issues/new/choose) 选择 Bug 模板，附上系统版本、Codex 来源、复现步骤和相关日志片段。请删除密钥、`auth.json`、中转 token 和私人对话内容。
+
+## 安全边界
+
+- CDP 只绑定 `127.0.0.1`，但没有身份认证；同一台电脑上的其他进程仍可能连接并读取或控制 renderer。
+- 暂停主题或只停止 injector 不会关闭正在运行的 Codex 调试端口；执行带重启的完整恢复，或退出全部 Codex 后从官方普通入口重新打开，风险窗口才结束。
+- 不修改官方 Codex 安装目录、WindowsApps、`app.asar` 或签名。
+- 不写入 API Key、Base URL 或模型供应商配置。
+- 恢复脚本只会控制经过包身份、进程路径和会话状态校验的 Codex 进程。
+- 完整威胁模型与操作建议见 [`../SECURITY.md`](../SECURITY.md)。
+
+维护者和代理使用的实现约束见 [`SKILL.md`](./SKILL.md)，运行时排错细节见 [`references/runtime-notes.md`](./references/runtime-notes.md)。

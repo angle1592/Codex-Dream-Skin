@@ -2,15 +2,15 @@
 
 [English](./README.en.md) · [上游项目](https://github.com/Fei-Away/Codex-Dream-Skin) · [Windows 详细说明](./windows/README.md)
 
-这是 [`Fei-Away/Codex-Dream-Skin`](https://github.com/Fei-Away/Codex-Dream-Skin) 的个人 Windows 定制分支，当前基于上游 **v1.5.11**。它用于维护我自己的使用方式，不准备向上游提交 PR，也不代表 OpenAI 或上游项目。
+这是 [`Fei-Away/Codex-Dream-Skin`](https://github.com/Fei-Away/Codex-Dream-Skin) 的个人 Windows 定制分支，当前基于上游 **v1.5.12**。它用于维护我自己的使用方式，不准备向上游提交 PR，也不代表 OpenAI 或上游项目。
 
 本仓库保留上游的本机 CDP 注入、安全校验、主题 ZIP、主题去重、热切换与恢复机制；不会修改 WindowsApps、`app.asar` 或官方 Codex 二进制文件。
 
-本次 v1.5.11 同步加入 Codex 26.727 的新主表面、顶栏、顶部渐变和设置页识别，修复注入器在运行但任务页未正确显示皮肤的兼容问题。
+本次 v1.5.12 同步保留 Codex 26.727 的新主表面、顶栏、顶部渐变和设置页识别修复，并加入最新的 Windows 主题 schema 与路径校验加固。
 
 ## 与上游的区别
 
-| 功能 | 本分支 | 上游 v1.5.11 |
+| 功能 | 本分支 | 上游 v1.5.12 |
 |---|---:|---:|
 | Windows 单一快捷方式，同时启动皮肤与主题管理 | ✅ | 部分入口分开 |
 | 恢复官方外观集成在托盘菜单 | ✅ | ✅ |
@@ -188,9 +188,11 @@ powershell.exe -NoProfile -File .\windows\tests\run-tests.ps1
 
 ## 安全边界
 
-- CDP 只绑 `127.0.0.1`，主题运行期间勿跑来路不明的本机程序
+- CDP 只绑 `127.0.0.1`，但**没有身份认证**；同一台电脑上的其他进程仍可能连接并读取或控制 renderer
+- 暂停主题或只停止 injector 不会关闭已启动 Codex 的调试端口；使用完整 Restore/重启，或退出全部 Codex 后从官方普通入口重新打开，风险窗口才结束
 - 不修改官方安装目录与代码签名
 - **不会**自动改写 API Key / Base URL；中转与换肤分开
+- 完整威胁模型与操作建议见 [`SECURITY.md`](./SECURITY.md)
 
 ## 许可与声明
 

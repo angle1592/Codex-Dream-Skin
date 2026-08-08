@@ -2,7 +2,7 @@
 
 [中文](./README.md) · [Upstream](https://github.com/Fei-Away/Codex-Dream-Skin) · [Windows guide](./windows/README.en.md)
 
-This repository is a personal Windows-focused downstream of [`Fei-Away/Codex-Dream-Skin`](https://github.com/Fei-Away/Codex-Dream-Skin), currently synchronized with upstream **v1.5.11**. It is maintained for a custom workflow and is not intended for an upstream pull request. It is not affiliated with OpenAI.
+This repository is a personal Windows-focused downstream of [`Fei-Away/Codex-Dream-Skin`](https://github.com/Fei-Away/Codex-Dream-Skin), currently synchronized with upstream **v1.5.12**. It is maintained for a custom workflow and is not intended for an upstream pull request. It is not affiliated with OpenAI.
 
 ## Downstream differences
 
@@ -12,7 +12,7 @@ This repository is a personal Windows-focused downstream of [`Fei-Away/Codex-Dre
 - The slider previews after roughly 200 ms; OK persists the value and Cancel restores the exact previous value.
 - Task strength affects Codex task/conversation routes only. Home screens are unchanged.
 - Switching a saved theme automatically restarts a stopped skin session.
-- Upstream v1.5.11 content fingerprinting, ZIP validation, Safe CSS checks, hot switching, and rollback remain intact.
+- Upstream v1.5.12 content fingerprinting, ZIP validation, Safe CSS checks, hot switching, and rollback remain intact.
 
 ## Requirements
 
@@ -25,7 +25,7 @@ This repository is a personal Windows-focused downstream of [`Fei-Away/Codex-Dre
 
 This personal repository does not currently publish its own release binaries. Use the source installer; upstream Setup binaries do not include the downstream task-strength feature.
 
-The v1.5.11 baseline recognizes the Codex 26.727 main surface, header, top fade, and Settings renderer, fixing cases where the injector was running but task pages were not skinned correctly.
+The v1.5.12 baseline includes the Codex 26.727 main-surface, header, top-fade, and Settings renderer fixes, plus the latest Windows theme-schema and path-containment hardening.
 
 ```powershell
 git clone https://github.com/angle1592/Codex-Dream-Skin.git
@@ -60,10 +60,9 @@ Logs live under `%LOCALAPPDATA%\CodexDreamSkin`. Do not take ownership of Window
 ## Credits and license
 
 <p align="center">
-  <a href="https://dreamskin.cc/studio">
-    <img src="docs/images/site-studio-en.webp" alt="Editing the community theme 月下松岚 in the DreamSkin.cc online Studio" width="900">
-  </a><br>
-  <sub>Online Studio · live preview on the left, background artwork, appearance/focal point, and palette on the right; any library theme loads straight in to keep editing</sub>
+  <img src="docs/images/studio-custom-look.png" alt="A custom background tuned in the DreamSkin.cc online Studio" width="900">
+  <br>
+  <sub>Online Studio · swap in a background you like, dial in the focal point and palette — now it's your theme</sub>
 </p>
 
 The macOS menu bar and Windows tray both link straight to **Gallery** and
@@ -231,9 +230,11 @@ More detail:
 
 ## Safety
 
-- CDP binds `127.0.0.1` only — avoid untrusted local processes while the theme runs.
+- CDP binds `127.0.0.1` only, but it has **no authentication**; another process on the same computer may still connect and inspect or control the renderer.
+- Pausing the theme or stopping only the injector does not close the debug port of an already running Codex process. Use a full Restore/restart, or quit every Codex process and reopen the official app normally, to end the exposure window.
 - Does not touch the official install directory or code signature.
 - **Never** rewrites API Key / Base URL; relay and theme stay separate.
+- See [`SECURITY.md`](./SECURITY.md) for the complete threat model and operating guidance.
 
 ## License
 
