@@ -1157,6 +1157,7 @@ try {
     'background-image: var(--dream-skin-art)',
     'main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"]) > header:is(.app-header-tint, [data-app-shell-header-edge-scroll], [class*="_Header_"])',
     '[class~="group/application-menu-top-bar"]',
+    '[class*="_ApplicationMenuTopBar_"]',
     '.app-shell-main-content-top-fade',
     'data-app-shell-main-content-top-fade',
     '_MainContentTopFade_',

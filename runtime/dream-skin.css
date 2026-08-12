@@ -604,9 +604,10 @@ html[data-dream-skin="active"][data-dream-shell="light"]
   text-shadow: none;
 }
 
-/* Windows keeps this native bar outside main; macOS simply has no match. */
+/* Windows keeps this native bar outside main; macOS simply has no match.
+   Codex 26.803.10989 moved from the public group token to a CSS Module class. */
 html[data-dream-skin="active"][data-dream-shell="dark"]
-  [class~="group/application-menu-top-bar"] {
+  :is([class~="group/application-menu-top-bar"], [class*="_ApplicationMenuTopBar_"]) {
   color: var(--ds-text) !important;
   background: rgb(var(--ds-panel-rgb) / .90) !important;
   border-bottom: 1px solid var(--ds-line) !important;
@@ -615,7 +616,7 @@ html[data-dream-skin="active"][data-dream-shell="dark"]
 }
 
 html[data-dream-skin="active"][data-dream-shell="dark"]
-  [class~="group/application-menu-top-bar"] :is(button, svg) {
+  :is([class~="group/application-menu-top-bar"], [class*="_ApplicationMenuTopBar_"]) :is(button, svg) {
   color: var(--ds-text) !important;
   text-shadow: 0 1px 2px rgb(var(--ds-bg-rgb) / .82) !important;
 }
